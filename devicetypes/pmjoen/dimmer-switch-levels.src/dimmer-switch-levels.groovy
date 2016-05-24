@@ -10,6 +10,7 @@
 	 * pmjoen@yahoo.com
 	 * 20160517
 	 *
+     * v1.4 - Modified text for preferences.
 	 * v1.3 - Improvement select stepper value up/down shows adjusting in multiAttributeTile
 	 * v1.2 - Bug fix modify icon for current state in multiAttributeTile 
 	 * v1.1 - Bug fix showing speed in multiAttributeTile 
@@ -110,12 +111,12 @@
 		}
 	    preferences {
 			section("Light Level Values") {
-				input "lowThreshold", "number", title: "Low Level", range: "1..99"
-				input "medThreshold", "number", title: "Medium Level", range: "1..99"
-				input "highThreshold", "number", title: "High Level", range: "1..99"
+				input "lowThreshold", "number", title: "Low Button Light Value", range: "1..99"
+				input "medThreshold", "number", title: "Medium Button Light Value", range: "1..99"
+				input "highThreshold", "number", title: "High Button Light Value", range: "1..99"
 			}
 	        section ("Interval Selection") {
-	            input "stepper", "enum", title: "Interval Value", defaultValue: "10", options: ["5","10","20"]
+	            input "stepper", "enum", title: "Up/Down Light Interval Value", defaultValue: "10", options: ["5","10","20"]
 	        }
 		}
 	}
