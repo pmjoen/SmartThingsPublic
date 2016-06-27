@@ -36,7 +36,7 @@ metadata {
 		multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true) {
 			tileAttribute ("device.currentState", key: "PRIMARY_CONTROL") {
 				attributeState "default", label:'ADJUSTING', action:"refresh.refresh", icon:"st.Lighting.light24", backgroundColor:"#2179b8", nextState: "turningOff"
-				attributeState "HIGH", label:'HIGH', action:"switch.off", icon:"st.Lighting.light24", backgroundColor:"#79b821", nextState: "turningOff"
+				attributeState "HIGH", label:'HIGH', action:"switch.off", icon:"st.Weather.weather1", backgroundColor:"#79b821", nextState: "turningOff"
 				attributeState "MED", label:'MED', action:"switch.off", icon:"st.Lighting.light24", backgroundColor:"#79b821", nextState: "turningOff"
 				attributeState "LOW", label:'LOW', action:"switch.off", icon:"st.Lighting.light24", backgroundColor:"#79b821", nextState: "turningOff"
 				attributeState "OFF", label:'OFF', action:"switch.on", icon:"st.Lighting.light24", backgroundColor:"#ffffff", nextState: "turningOn"
@@ -55,9 +55,9 @@ metadata {
             		state "ADJUSTING.MED", label:'MED', action: "medSpeed", icon:"st.Home.home30", backgroundColor: "#2179b8"
 		}
 		standardTile("highSpeed", "device.currentState", inactiveLabel: false, width: 2, height: 2) {
-			state "default", label: 'HIGH', action: "highSpeed", icon:"st.Home.home30", backgroundColor: "#ffffff"
-			state "HIGH", label: 'HIGH', action: "highSpeed", icon:"st.Home.home30", backgroundColor: "#79b821"
-            		state "ADJUSTING.HIGH", label:'HIGH', action: "highSpeed", icon:"st.Home.home30", backgroundColor: "#2179b8"
+			state "default", label: 'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#ffffff"
+			state "HIGH", label: 'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#79b821"
+            		state "ADJUSTING.HIGH", label:'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#2179b8"
 		}
 		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
