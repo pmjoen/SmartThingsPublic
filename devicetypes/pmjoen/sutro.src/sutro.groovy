@@ -1,0 +1,182 @@
+/**
+ *  Z-PlantLink
+ *
+ * INSTALLATION
+ * =========================================
+ * 1) Create a new device type (https://graph.api.smartthings.com/ide/devices)
+ *     Name: sutro
+ *     Author: pmjoen
+ *     Capabilities:
+ *         Battery
+ *         Water Sensor 
+ *         Polling
+ *
+ * 2) Create a new device (https://graph.api.smartthings.com/device/list)
+ *     Name: Your Choice
+ *     Device Network Id: Your Choice
+ *     Type: sutro
+ *     Location: Choose the correct location
+ *     Hub/Group: Leave blank
+ *
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ *	Version: 1.0 - Initial Version
+ */
+
+metadata {
+	definition (name: "sutro", namespace: "pmjoen", author: "SmartThings") {
+		capability "Battery"
+		capability "Polling"
+		capability "Sensor"
+		capability "Refresh"
+
+		attribute "status", "string"
+		attribute "ph", "number"
+		attribute "alkalinity", "number"
+		attribute "chlorine", "number"
+		attribute "temp", "number"
+		attribute "battery", "number"
+        
+        command "test"
+        command "Unavailable"
+		command "Attention"
+		command "Ok"
+	
+		//fingerprint deviceId: "0x1101", inClusters: "0x26, 0x27, 0x70, 0x86, 0x72"
+	}
+
+    preferences {
+    }
+
+	tiles {
+    	multiAttributeTile(name:"status", type: "switch", width: 6, height: 4){
+			tileAttribute ("device.status", key: "PRIMARY_CONTROL") {
+            	attributeState "Unavailable", label: 'Attention', backgroundColor: "#D3D3D3", icon:"https://cloud.githubusercontent.com/assets/8125308/18056628/419f2338-6dd2-11e6-85cc-65d8e671ddad.png"
+				attributeState "Attention", label: 'Attention', backgroundColor: "#FF0000", icon:"https://cloud.githubusercontent.com/assets/8125308/18056628/419f2338-6dd2-11e6-85cc-65d8e671ddad.png"
+				attributeState "Ok", label: 'Good', backgroundColor: "#cce6ff", icon:"https://cloud.githubusercontent.com/assets/8125308/18056684/8ba905ac-6dd2-11e6-9b4d-6d35b71dffa9.png"
+			}
+        }
+
+		valueTile("ph", "device.ph", width: 2, height: 2) {
+//        	state("val", label:'${currentValue}%', defaultState: true, decoration: "flat",
+			state("val", label:'7.1 Ph', decoration: "flat", backgroundColor: "#D3D3D3",
+				backgroundColors:[
+					[value: 6.8, color: "#FF0000"],
+					[value: 6.9, color: "#FF0000"],
+					[value: 7.0, color: "#FFEA00"],
+					[value: 7.1, color: "#FFEA00"],
+					[value: 7.2, color: "#79B821"],
+					[value: 7.3, color: "#79B821"],
+ 					[value: 7.4, color: "#79B821"],
+                    [value: 7.5, color: "#79B821"],
+                    [value: 7.6, color: "#FFEA00"],
+                    [value: 7.7, color: "#FFEA00"],
+                    [value: 7.8, color: "#FF0000"],
+                    [value: 7.9, color: "#FF0000"],
+                    [value: 8.0, color: "#FF0000"],
+                    [value: 8.1, color: "#FF0000"],
+                    [value: 8.2, color: "#FF0000"]
+				]
+			)
+		}
+        valueTile("alkalinity", "device.alkalinity", width: 2, height: 2) {
+//			 state "val", label:'${currentValue}', unit"Ta"
+        	state ("val", label:'80 Ta', decoration: "flat", backgroundColor: "#D3D3D3",			
+        		backgroundColors:[
+                    [value: 40, color: "#FF0000"],
+					[value: 50, color: "#FF0000"],
+					[value: 60, color: "#FFEA00"],
+					[value: 70, color: "#79B821"],
+					[value: 80, color: "#79B821"],
+					[value: 90, color: "#79B821"],
+ 					[value: 100, color: "#79B821"],
+                    [value: 110, color: "#FFEA00"],
+                    [value: 120, color: "#FFEA00"],
+                    [value: 130, color: "#FF0000"],
+                    [value: 140, color: "#FF0000"],
+                    [value: 150, color: "#FF0000"]
+				]
+			)
+        }
+		
+		valueTile("chlorine", "device.chlorine", width: 2, height: 2, decoration: "flat") {
+//			 state "val", label:'${currentValue}', unit "Cl", defaultState: true
+			 state "val", label:'0.5 Cl', defaultState: true, backgroundColor: "#D3D3D3"
+		}
+		valueTile("temp", "device.temp", width: 2, height: 2, decoration: "flat") {
+			 state "val", label:'${currentValue}°', defaultState: true
+//             state "val", label:'77°', defaultState: true
+		}
+		valueTile("battery", "device.battery", width: 2, height: 2, decoration: "flat") {
+			 state "default", label:'${currentValue}% Battery', unit:"Battery"
+//             state "default", label:'82% Battery', unit:"Battery"
+		}
+		standardTile("refresh", "device.switch", width: 2, height: 2, decoration: "flat") {
+			 state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
+		}
+        standardTile("test", "device.switch", width: 2, height: 2, decoration: "flat") {
+			 state "default", label:'TEST', action:"test"
+		}
+
+		 main "status"
+		 details(["status", "ph", "alkalinity", "chlorine", "temp", "battery", "refresh", "test"])	      
+	}
+}
+
+def installed() {
+    sendEvent(name: "ph", value: 7.3)
+            log.debug "ph set 7.3"
+    sendEvent(name: "alkalinity", value: 90)
+                log.debug "alkalinity set 90"
+    sendEvent(name: "chlorine", value: 1)
+                log.debug "chlorine set 1"
+    sendEvent(name: "temp", value: 65)
+                log.debug "temp set 65"
+    sendEvent(name: "battery", value: "23")
+                log.debug "battery set 23"
+}
+
+def Test() {
+        	log.debug "Setting values 'Test'"
+    sendEvent(name: "ph", value: 7.3)
+            log.debug "ph set 7.3"
+    sendEvent(name: "alkalinity", value: 90)
+                log.debug "alkalinity set 90"
+    sendEvent(name: "chlorine", value: 1)
+                log.debug "chlorine set 1"
+    sendEvent(name: "temp", value: 65)
+                log.debug "temp set 65"
+    sendEvent(name: "battery", value: "23")
+                log.debug "battery set 23"
+}
+
+def Unavailable() {
+	sendEvent(name: "status", value: "Unavailable" as String)
+    	log.debug "Setting status 'Unavailable'"
+}
+
+def Attention() {
+	sendEvent(name: "status", value: "Attention" as String)
+        	log.debug "Setting status 'Attention'"
+}
+
+def Ok() {
+	sendEvent(name: "status", value: "Ok" as String)
+        	log.debug "Setting status 'Ok'"
+}
+
+def poll() {
+	log.debug "Executing 'poll'"
+}
+
+def refresh() {
+            log.debug "Executing 'refresh'"
+}

@@ -45,19 +45,20 @@ metadata {
 			}
 		}
 		standardTile("lowSpeed", "device.currentState", inactiveLabel: false, width: 2, height: 2) {
-        		state "default", label: 'LOW', action: "lowSpeed", icon:"st.Home.home30", backgroundColor: "#ffffff"
-			state "LOW", label:'LOW', action: "lowSpeed", icon:"st.Home.home30", backgroundColor: "#79b821"
-			state "ADJUSTING.LOW", label:'LOW', action: "lowSpeed", icon:"st.Home.home30", backgroundColor: "#2179b8"
+        	state "default", label: 'LOW', action: "lowSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981749/9329c60a-6aca-11e6-94d3-fbb8789b0fd6.png", backgroundColor: "#ffffff"
+			state "LOW", label:'LOW', action: "lowSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981749/9329c60a-6aca-11e6-94d3-fbb8789b0fd6.png", backgroundColor: "#79b821"
+			state "ADJUSTING.LOW", label:'LOW', action: "lowSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981749/9329c60a-6aca-11e6-94d3-fbb8789b0fd6.png", backgroundColor: "#2179b8"
   		}
 		standardTile("medSpeed", "device.currentState", inactiveLabel: false, width: 2, height: 2) {
-			state "default", label: 'MED', action: "medSpeed", icon:"st.Home.home30", backgroundColor: "#ffffff"
-			state "MED", label: 'MED', action: "medSpeed", icon:"st.Home.home30", backgroundColor: "#79b821"
-            		state "ADJUSTING.MED", label:'MED', action: "medSpeed", icon:"st.Home.home30", backgroundColor: "#2179b8"
+			state "default", label: 'MED', action: "medSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981714/6fd678ce-6aca-11e6-8712-547d43143f9c.png", backgroundColor: "#ffffff"
+			state "MED", label: 'MED', action: "medSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981714/6fd678ce-6aca-11e6-8712-547d43143f9c.png", backgroundColor: "#79b821"
+            state "ADJUSTING.MED", label:'MED', action: "medSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981714/6fd678ce-6aca-11e6-8712-547d43143f9c.png", backgroundColor: "#2179b8"
 		}
 		standardTile("highSpeed", "device.currentState", inactiveLabel: false, width: 2, height: 2) {
-			state "default", label: 'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#ffffff"
-			state "HIGH", label: 'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#79b821"
-            		state "ADJUSTING.HIGH", label:'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#2179b8"
+			state "default", label: 'HIGH', action: "highSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981662/37b564d2-6aca-11e6-87f0-b1aecbe652cd.png", backgroundColor: "#ffffff"
+			state "HIGH", label: 'HIGH', action: "highSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981662/37b564d2-6aca-11e6-87f0-b1aecbe652cd.png", backgroundColor: "#79b821"
+            state "ADJUSTING.HIGH", label:'HIGH', action: "highSpeed", icon:"https://cloud.githubusercontent.com/assets/8125308/17981662/37b564d2-6aca-11e6-87f0-b1aecbe652cd.png", backgroundColor: "#2179b8"
+//			state "ADJUSTING.HIGH", label:'HIGH', action: "highSpeed", icon:"st.Weather.weather1", backgroundColor: "#2179b8"
 		}
 		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
