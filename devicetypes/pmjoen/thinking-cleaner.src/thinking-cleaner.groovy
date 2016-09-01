@@ -20,6 +20,7 @@
  *	Version: 1.4 - Added bin status and code clean up
  *	Version: 1.4.1 - Added poll on inilizition, better error handling, inproved clean button
  *	Version: 1.4.2 - Added JSON response mapping, Multi attribute status tile (more statuses), all new icons, modified labels and buttons.
+ *	Version: 1.4.3 - Added actions for multi-attribute status tile, added actions for buttons, changed visual texts, all new images.
  *
  */
 import groovy.json.JsonSlurper
@@ -34,6 +35,7 @@ metadata {
         
 		command "refresh"
 		command "spot"
+        command "max"        
 
 		attribute "network","string"
 		attribute "bin","string"
@@ -48,49 +50,54 @@ metadata {
 		multiAttributeTile(name:"status", type: "lighting", width: 3, height: 2) {
 			tileAttribute ("device.status", key: "PRIMARY_CONTROL") {
 				attributeState "default", label:'unknown', icon: "st.unknown.unknown.unknown"
-				attributeState "charging", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18129579/eef29f04-6f50-11e6-909d-2dfda7345aab.png", backgroundColor: "#FFEA00"
-				attributeState "cleaning", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#79b821"
-				attributeState "docked", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#D3D3D3"
-				attributeState "docking", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#E5E500"
-				attributeState "error", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18101836/e18bb9cc-6eb5-11e6-9a6c-830215f6715f.png", backgroundColor: "#FF0000"
-				attributeState "paused", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18101564/d28f0a9c-6eb4-11e6-989e-3401781cb9aa.png", backgroundColor: "#D3D3D3"
-				attributeState "delayed", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18101578/e6d34bda-6eb4-11e6-8600-3ccc0165d9c8.png", backgroundColor: "#D3D3D3"
-				attributeState "findme", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18101597/f5e07a8a-6eb4-11e6-8475-784a990d0f71.png", backgroundColor: "#FFEA00"
-				attributeState "waiting", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#D3D3D3"
+				attributeState "charging", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171429/97278a78-7027-11e6-840e-a4cc87642bd0.png", backgroundColor: "#D3D3D3", nextState:"cleaning"
+                attributeState "cleaning", label:'${currentValue}', action:"switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#79b821", nextState:"docking"
+//                attributeState "max", label:'${currentValue}', action:"switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#79b821", nextState:"docking"
+//                attributeState "spot", label:'${currentValue}', action:"switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#79b821", nextState:"docking"
+				attributeState "docked", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#ffffff", nextState:"cleaning"
+				attributeState "docking", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#D3D3D3", nextState:"docked"
+				attributeState "error", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171468/c406f4e8-7027-11e6-9ead-d133313cc0f2.png", backgroundColor: "#FF0000"
+				attributeState "paused", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#D3D3D3"
+				attributeState "delayed", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171514/ed458b94-7027-11e6-9cf9-3060d3d4743a.png", backgroundColor: "#D3D3D3"
+				attributeState "findme", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171531/010647e0-7028-11e6-92c3-46ecc2a8353e.png", backgroundColor: "#D3D3D3"
 			 }
              tileAttribute ("device.battery", key: "SECONDARY_CONTROL") {
 				attributeState "batery", label:'${currentValue}% Battery'
 			}
          }
-		standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
-			state "beep", label:'beep', action:"tone.beep", icon:"st.quirky.spotter.quirky-spotter-sound-on", backgroundColor:"#ffffff"
+        standardTile("cleanbutton", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+			state("on", label: 'cleaning', action: "switch.off", backgroundColor: "#79b821", nextState:"off")
+			state("off", label: 'docked', action: "switch.on", backgroundColor: "#ffffff", nextState:"on")
 		}
-		standardTile("bin", "device.bin", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
-			state ("default", label:'unknown', icon: "st.unknown.unknown.unknown")
-			state ("empty", label:'Bin Empty', icon: "st.Kids.kids10", backgroundColor: "#79b821")
-			state ("full", label:'Bin Full', icon: "st.Kids.kids19", backgroundColor: "#bc2323")
+        standardTile("spot", "device.spot", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+            state("on", label: 'spot', action: "switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18172159/f996fbb0-7029-11e6-852c-f6bf70544fa5.png", backgroundColor: "#ffffff", nextState:"on")
+//            state("default", label:'unknown', icon:"https://cloud.githubusercontent.com/assets/8125308/18172159/f996fbb0-7029-11e6-852c-f6bf70544fa5.png")
+			state("spot", label: 'dock', action: "spot", icon: "https://cloud.githubusercontent.com/assets/8125308/18172159/f996fbb0-7029-11e6-852c-f6bf70544fa5.png", backgroundColor: "#ffffff")
 		}
-		standardTile("clean", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
-//			state("on", label: 'dock', action: "switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#79b821", nextState:"off")
-			state("off", label: 'clean', action: "switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#ffffff", nextState:"on")
+        standardTile("clean", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+        	state("default", label:'unknown', icon:"https://cloud.githubusercontent.com/assets/8125308/18172251/528bc502-702a-11e6-9ff6-803d8389c64a.png")
+			state("off", label: 'max', action: "switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18172251/528bc502-702a-11e6-9ff6-803d8389c64a.png", backgroundColor: "#ffffff", nextState:"on")
+			state("on", label: 'max', action: "switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18172251/528bc502-702a-11e6-9ff6-803d8389c64a.png", backgroundColor: "#79b821", nextState:"off")
 		}
-		standardTile("network", "device.network", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+        standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+			state "beep", label:'find', action:"tone.beep", icon:"st.quirky.spotter.quirky-spotter-sound-on", backgroundColor:"#ffffff"
+		}
+        standardTile("network", "device.network", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
 			state ("default", label:'unknown', icon: "st.unknown.unknown.unknown")
 			state ("Connected", label:'Link Good', icon: "https://cloud.githubusercontent.com/assets/8125308/18098635/b2b266da-6ea8-11e6-8ec0-6f947d7d7a67.png", backgroundColor: "#79b821")
 			state ("Not Connected", label:'Link Bad', icon: "https://cloud.githubusercontent.com/assets/8125308/18098653/c4d8aeb4-6ea8-11e6-855f-e5fe50f81a29.png", backgroundColor: "#ff0000")
 		}
-		standardTile("spot", "device.spot", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
-			state("spot", label: 'spot', action: "spot", icon: "https://cloud.githubusercontent.com/assets/8125308/18099787/d34ecbfe-6ead-11e6-89de-7ed6ffcccfba.png", backgroundColor: "#ffffff")
+        standardTile("bin", "device.bin", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+			state ("default", label:'unknown', icon: "st.unknown.unknown.unknown")
+			state ("empty", label:'Bin Empty', icon: "st.Kids.kids10", backgroundColor: "#79b821")
+			state ("full", label:'Bin Full', icon: "st.Kids.kids19", backgroundColor: "#bc2323")
 		}
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
 			state("default", action:"refresh.refresh", icon:"st.secondary.refresh")
 		}
-        standardTile("cleanbutton", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
-			state("on", label: 'cleaning', action: "switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#79b821", nextState:"off")
-			state("off", label: 'docked', action: "switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18097626/366bb54e-6ea4-11e6-9a86-a63dfd630719.png", backgroundColor: "#ffffff", nextState:"on")
-		}
 
-		main("cleanbutton")
+//		main("cleanbutton")
+        main("status")
 			details(["status","spot","clean","beep","network","bin","battery","refresh"])
 		}
 }
@@ -141,11 +148,11 @@ def parse(String description) {
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_base_wait":
-					sendEvent(name: 'status', value: "waiting" as String)
+					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug":
-					sendEvent(name: 'status', value: "docking" as String)
+					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_recon":
@@ -161,7 +168,7 @@ def parse(String description) {
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_wait":
-					sendEvent(name: 'status', value: "waiting" as String)
+					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_stopped":
@@ -220,7 +227,7 @@ def parse(String description) {
 				case "st_dock":
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "docking" as String)
-						sendEvent(name: 'switch', value: "on" as String)
+						sendEvent(name: 'switch', value: "off" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
@@ -233,6 +240,7 @@ def parse(String description) {
 				break;
 				default:
 					sendEvent(name: 'status', value: "error" as String)
+                    sendEvent(name: 'bin', value: "default" as String)
 				break;
 			}
 			break;
@@ -241,6 +249,7 @@ def parse(String description) {
 	else {
 		sendEvent(name: 'status', value: "error" as String)
 		sendEvent(name: 'network', value: "Not Connected" as String)
+        sendEvent(name: 'bin', value: "default" as String)
 		log.debug headerString
 	}
 	parse
@@ -279,6 +288,12 @@ def spot() {
 	log.debug "Executing 'spot'"
 	ipSetup()
 	api('spot')
+}
+
+def max() {
+	log.debug "Executing 'max clean'"
+	ipSetup()
+	api('max')
 }
 
 def poll() {
@@ -328,6 +343,10 @@ def api(String rooCommand, success = {}) {
 		break;
 		case "spot":
 			rooPath = "/command.json?command=spot"
+			log.debug "The Spot Command was sent"
+		break;
+        case "max":
+			rooPath = "/command.json?command=max"
 			log.debug "The Spot Command was sent"
 		break;
 		case "refresh":
