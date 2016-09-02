@@ -64,6 +64,7 @@ metadata {
 			}
          }
         standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+			state "inactive", label:'disabled', icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#D3D3D3"
 			state "beep", label:'find', action:"tone.beep", icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#ffffff"
 		}
         standardTile("network", "device.network", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
@@ -117,57 +118,71 @@ def parse(String description) {
 				case "st_base":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_base_recon":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_base_full":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_base_trickle":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_base_wait":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_plug":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_plug_recon":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_plug_full":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_plug_trickle":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_plug_wait":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_stopped":
 					sendEvent(name: 'status', value: "paused" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_cleanstop":
 					sendEvent(name: 'status', value: "paused" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_delayed":
 					sendEvent(name: 'status', value: "delayed" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_pickup":
 					sendEvent(name: 'status', value: "paused" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_locate":
@@ -177,6 +192,8 @@ def parse(String description) {
 				case "st_clean":
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
+                        sendEvent(name: 'bin', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
@@ -188,6 +205,7 @@ def parse(String description) {
 				case "st_clean_spot":
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
@@ -199,11 +217,13 @@ def parse(String description) {
 				case "st_clean_max":
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
 						sendEvent(name: 'switch', value: "on" as String)
+                        sendEvent(name: 'beep', value: "inactive" as String)
 						log.debug result.power_status.cleaner_state
 					}
 				break;
@@ -211,18 +231,22 @@ def parse(String description) {
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "docking" as String)
 						sendEvent(name: 'switch', value: "off" as String)
+                        sendEvent(name: 'beep', value: "inactive" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
+                        sendEvent(name: 'beep', value: "inactive" as String)
 						log.debug result.power_status.cleaner_state
 					}
 				break;
 				case "st_off":
 					sendEvent(name: 'switch', value: "off" as String)
 					sendEvent(name: 'status', value: "docked" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				default:
 					sendEvent(name: 'status', value: "error" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
                     sendEvent(name: 'bin', value: "default" as String)
 				break;
 			}
@@ -232,6 +256,7 @@ def parse(String description) {
 	else {
 		sendEvent(name: 'status', value: "error" as String)
 		sendEvent(name: 'network', value: "Not Connected" as String)
+        sendEvent(name: 'beep', value: "inactive" as String)
         sendEvent(name: 'bin', value: "default" as String)
 		log.debug headerString
 	}
