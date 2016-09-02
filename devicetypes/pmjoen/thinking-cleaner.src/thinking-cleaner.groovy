@@ -22,6 +22,7 @@
  *	Version: 1.4.2 - Added JSON response mapping, Multi attribute status tile (more statuses), all new icons, modified labels and buttons.
  *	Version: 1.4.3 - Added actions for multi-attribute status tile, added actions for buttons, changed visual texts, all new images.
  *	Version: 1.4.4 - Removed Spot and Clean/Max buttons as Multi-attribute tile now acts as the clean/dock button.  Code clean up.
+ *	Version: 1.4.5 - Modified find button to disable if status doesnt allow action.
  *
  */
  
@@ -231,11 +232,9 @@ def parse(String description) {
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "docking" as String)
 						sendEvent(name: 'switch', value: "off" as String)
-                        sendEvent(name: 'beep', value: "inactive" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
-                        sendEvent(name: 'beep', value: "inactive" as String)
 						log.debug result.power_status.cleaner_state
 					}
 				break;
