@@ -23,6 +23,7 @@
  *	Version: 1.4.3 - Added actions for multi-attribute status tile, added actions for buttons, changed visual texts, all new images.
  *	Version: 1.4.4 - Removed Spot and Clean/Max buttons as Multi-attribute tile now acts as the clean/dock button.  Code clean up.
  *	Version: 1.4.5 - Modified find button to disable if status doesnt allow action.
+ *	Version: 1.4.6 - Added capabilities to work with Smarttiles 6. 
  *
  */
  
@@ -35,6 +36,8 @@ metadata {
 		capability "Refresh"
 		capability "Switch"
 		capability "Tone"
+        capability "Sensor"
+        capability "Actuator"
         
 		command "refresh"      
 
@@ -110,6 +113,7 @@ def parse(String description) {
 			switch (result.tc_status.bin_status) {
 				case "0":
 					sendEvent(name: 'bin', value: "empty" as String)
+                   	
 				break;
 				case "1":
 					sendEvent(name: 'bin', value: "full" as String)
@@ -193,7 +197,7 @@ def parse(String description) {
 				case "st_clean":
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
-                        sendEvent(name: 'bin', value: "default" as String)
+//                        sendEvent(name: 'bin', value: "default" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
 					}
@@ -275,7 +279,7 @@ def updated() {
 }
 
 def initialize() {
-	log.info "Thinking Cleaner ${textVersion()} ${textCopyright()}"
+	log.info "Thinking Cleaner ${textVersion()}"
 	ipSetup()
 	poll()
 }
@@ -403,4 +407,8 @@ private String convertPortToHex(port) {
 }
 private delayAction(long time) {
 	new physicalgraph.device.HubAction("delay $time")
+}
+
+private def textVersion() {
+	def text = "Version 1.4.6"
 }
