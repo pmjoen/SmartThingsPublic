@@ -57,7 +57,7 @@ metadata {
 				attributeState "charging", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171429/97278a78-7027-11e6-840e-a4cc87642bd0.png", backgroundColor: "#D3D3D3", nextState:"cleaning"
                 attributeState "cleaning", label:'${currentValue}', action:"switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#79b821", nextState:"docking"
 				attributeState "docked", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#ffffff", nextState:"cleaning"
-				attributeState "docking", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#D3D3D3", nextState:"docked"
+				attributeState "docking", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#D3D3D3", nextState:"docked"
 				attributeState "error", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171468/c406f4e8-7027-11e6-9ead-d133313cc0f2.png", backgroundColor: "#FF0000"
 				attributeState "paused", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#D3D3D3", nextState:"cleaning"
 				attributeState "delayed", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171514/ed458b94-7027-11e6-9cf9-3060d3d4743a.png", backgroundColor: "#D3D3D3", nextState:"cleaning"
@@ -103,6 +103,7 @@ def parse(String description) {
 		bodyString = new String(map.body.decodeBase64())
 		slurper = new JsonSlurper()
 		result = slurper.parseText(bodyString)
+//        log.debug result.tc_status.bin_status as Integer
 		switch (result.action) {
 			case "command":
 				sendEvent(name: 'network', value: "Connected" as String)
@@ -112,8 +113,7 @@ def parse(String description) {
 				sendEvent(name: 'battery', value: result.power_status.battery_charge as Integer)
 			switch (result.tc_status.bin_status) {
 				case "0":
-					sendEvent(name: 'bin', value: "empty" as String)
-                   	
+					sendEvent(name: 'bin', value: "empty" as String)   	
 				break;
 				case "1":
 					sendEvent(name: 'bin', value: "full" as String)
@@ -123,17 +123,17 @@ def parse(String description) {
 				case "st_base":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_recon":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_full":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_trickle":
 					sendEvent(name: 'status', value: "charging" as String)
@@ -148,17 +148,17 @@ def parse(String description) {
 				case "st_plug":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_plug_recon":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_plug_full":
 					sendEvent(name: 'status', value: "charging" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_plug_trickle":
 					sendEvent(name: 'status', value: "charging" as String)
@@ -168,7 +168,7 @@ def parse(String description) {
 				case "st_plug_wait":
 					sendEvent(name: 'status', value: "docked" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_stopped":
 					sendEvent(name: 'status', value: "paused" as String)
@@ -183,7 +183,7 @@ def parse(String description) {
 				case "st_delayed":
 					sendEvent(name: 'status', value: "delayed" as String)
 					sendEvent(name: 'switch', value: "off" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_pickup":
 					sendEvent(name: 'status', value: "paused" as String)
@@ -197,7 +197,6 @@ def parse(String description) {
 				case "st_clean":
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
-//                        sendEvent(name: 'bin', value: "default" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
 					}
@@ -336,7 +335,6 @@ def api(String rooCommand, success = {}) {
 		case "on":
 //			rooPath = "/command.json?command=clean"
 //			log.debug "The Clean Command was sent"
-// Investigating as it looks like the MAX command restarts the Roomba and during Off status it is not reporting power which causes push notification.
             rooPath = "/command.json?command=max"
             log.debug "The Max Clean Command was sent"
 		break;
