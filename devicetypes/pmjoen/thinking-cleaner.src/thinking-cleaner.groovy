@@ -147,7 +147,7 @@ def parse(String description) {
                     sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_full":
-					sendEvent(name: 'status', value: "docked" as String)
+					sendEvent(name: 'status', value: "charging" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_trickle":
