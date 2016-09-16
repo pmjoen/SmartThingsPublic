@@ -126,7 +126,7 @@ def parse(String description) {
 			case "full_status":
 				sendEvent(name: 'network', value: "Connected" as String)
 				sendEvent(name: 'battery', value: result.power_status.battery_charge as Integer)
-        		log.debug "Bin status ${result.tc_status.bin_status}"
+        		log.debug "Bin status value ${result.tc_status.bin_status}"
 			switch (result.tc_status.bin_status) { 
 				case "0":
 					sendEvent(name: 'bin', value: "empty" as String) 
