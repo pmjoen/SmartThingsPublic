@@ -26,6 +26,7 @@
  *	Version: 1.4.6 - Added capabilities to work with Smarttiles 6. 
  *	Version: 1.4.7 - Added status for plugged, new plugged in image, cleaned up code.  
  *	Version: 1.4.8 - Added clean mode setting for user selection. 
+ *	Version: 1.4.9 - Added switch values back per feedback.  
  *
  */
  
@@ -96,6 +97,10 @@ metadata {
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
 			state("default", action:"refresh.refresh", icon:"st.secondary.refresh")
 		}
+        standardTile("clean", "device.switch", width: 1, height: 1, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
+			state("on", label: 'dock', action: "switch.off", icon: "st.Appliances.appliances13", backgroundColor: "#79b821", nextState:"off")
+			state("off", label: 'clean', action: "switch.on", icon: "st.Appliances.appliances13", backgroundColor: "#79b821", nextState:"on")
+		}
 
         main("status")
 			details(["status","network","bin","beep","refresh"])        
@@ -141,57 +146,71 @@ def parse(String description) {
 				case "st_base":
 					sendEvent(name: 'status', value: "docked" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_base_recon":
 					sendEvent(name: 'status', value: "charging" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_base_full":
 					sendEvent(name: 'status', value: "charging" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_base_trickle":
 					sendEvent(name: 'status', value: "docked" as String)
                     sendEvent(name: 'beep', value: "inactive" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_base_wait":
 					sendEvent(name: 'status', value: "docked" as String)
                     sendEvent(name: 'beep', value: "inactive" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug":
 					sendEvent(name: 'status', value: "plugged" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_recon":
 					sendEvent(name: 'status', value: "pluggedcharge" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_full":
 					sendEvent(name: 'status', value: "pluggedcharge" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_trickle":
 					sendEvent(name: 'status', value: "plugged" as String)
                     sendEvent(name: 'beep', value: "inactive" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_wait":
 					sendEvent(name: 'status', value: "plugged" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_stopped":
 					sendEvent(name: 'status', value: "paused" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_cleanstop":
 					sendEvent(name: 'status', value: "paused" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_delayed":
 					sendEvent(name: 'status', value: "delayed" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_pickup":
 					sendEvent(name: 'status', value: "paused" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_locate":
 					sendEvent(name: 'status', value: "findme" as String)
@@ -201,9 +220,11 @@ def parse(String description) {
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
+						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
+						sendEvent(name: 'switch', value: "off" as String)
 					}
 				break;
 				case "st_clean_spot":
@@ -211,9 +232,11 @@ def parse(String description) {
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
+						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
-						sendEvent(name: 'status', value: "error" as String)                      
+						sendEvent(name: 'status', value: "error" as String) 
+						sendEvent(name: 'switch', value: "off" as String)                     
 					}
 				break;
 				case "st_clean_max":
@@ -221,24 +244,29 @@ def parse(String description) {
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
+						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
                         sendEvent(name: 'beep', value: "inactive" as String)
+						sendEvent(name: 'switch', value: "off" as String)
 					}
 				break;
 				case "st_dock":
                     log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "docking" as String)
+						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
+						sendEvent(name: 'switch', value: "off" as String)
 					}
 				break;
 				case "st_off":
 					sendEvent(name: 'status', value: "error" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				default:
 					sendEvent(name: 'status', value: "default" as String)
@@ -415,5 +443,5 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	def text = "Version 1.4.8"
+	def text = "Version 1.4.9"
 }
