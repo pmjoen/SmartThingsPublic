@@ -27,6 +27,7 @@
  *	Version: 1.4.7 - Added status for plugged, new plugged in image, cleaned up code.  
  *	Version: 1.4.8 - Added clean mode setting for user selection. 
  *	Version: 1.4.9 - Added switch values back per feedback.  
+ *	Version: 1.5.0 - Added debug option in preferences to remove unwated logging during normal operation. 
  *
  */
  
@@ -56,9 +57,9 @@ metadata {
         section("Cleaning Mode") {
         	input "cleanmode", "enum", title: "Clean Mode", defaultValue: "Clean", required: true, displayDuringSetup: true, options: ["Clean","Max Clean"]
         }
-//        section("Debug Logging") {
-//        	input "debug", "bool", title: "Debug Logging", defaultValue: "false", displayDuringSetup: true
-//        }
+        section("Debug Logging") {
+        	input "debug_pref", "bool", title: "Debug Logging", defaultValue: "false", displayDuringSetup: true
+        }
 	}
 
 	tiles {
@@ -121,9 +122,9 @@ def parse(String description) {
 		slurper = new JsonSlurper()
 		result = slurper.parseText(bodyString)
 // Shows JSON response
-//        log.debug bodyString
-//        if (settings.debug == "true") log.info "Firmware Version ${result.firmware.version}"
-        log.info "Model Number ${result.tc_status.modelnr}"
+        if (settings.debug_pref == true) log.debug bodyString
+        if (settings.debug_pref == true)  log.info "Firmware Version ${result.firmware.version}"
+        if (settings.debug_pref == true) log.info "Model Number ${result.tc_status.modelnr}"
 		switch (result.action) {
 			case "command":
 				sendEvent(name: 'network', value: "Connected" as String)
@@ -131,15 +132,15 @@ def parse(String description) {
 			case "full_status":
 				sendEvent(name: 'network', value: "Connected" as String)
 				sendEvent(name: 'battery', value: result.power_status.battery_charge as Integer)
-        		log.debug "Bin status value ${result.tc_status.bin_status}"
+        		if (settings.debug_pref == true) log.debug "Bin status value ${result.tc_status.bin_status}"
 			switch (result.tc_status.bin_status) { 
 				case "0":
 					sendEvent(name: 'bin', value: "empty" as String) 
-                    log.debug "Bin status 'Empty'"
+                    if (settings.debug_pref == true) log.debug "Bin status 'Empty'"
 				break;
 				case "1":
 					sendEvent(name: 'bin', value: "full" as String)
-                    log.debug "Bin status 'Full'"
+                    if (settings.debug_pref == true) log.debug "Bin status 'Full'"
 				break;
 			}
 			switch (result.power_status.cleaner_state) {
@@ -216,7 +217,7 @@ def parse(String description) {
 					sendEvent(name: 'status', value: "findme" as String)
 				break;
 				case "st_clean":
-                   	log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+                   	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
@@ -228,7 +229,7 @@ def parse(String description) {
 					}
 				break;
 				case "st_clean_spot":
-                    log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+                    if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
@@ -240,7 +241,7 @@ def parse(String description) {
 					}
 				break;
 				case "st_clean_max":
-                   	log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+                   	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
@@ -253,7 +254,7 @@ def parse(String description) {
 					}
 				break;
 				case "st_dock":
-                    log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+                    if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "docking" as String)
 						sendEvent(name: 'switch', value: "on" as String)
@@ -282,7 +283,7 @@ def parse(String description) {
 		sendEvent(name: 'network', value: "Not Connected" as String)
         sendEvent(name: 'beep', value: "inactive" as String)
         sendEvent(name: 'bin', value: "default" as String)
-		log.debug headerString
+		if (settings.debug_pref == true) log.debug headerString
 	}
 	parse
 }
@@ -290,18 +291,17 @@ def parse(String description) {
 // handle commands
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
+	if (settings.debug_pref == true) log.debug "Installed with settings: ${settings}"
 	initialize()
 }
 
 def updated() {
-    log.debug "Updated with settings: ${settings}"
-    log.debug "Debug mode is ${settings.debug}"
+    if (settings.debug_pref == true) log.debug "Updated with settings: ${settings}"
 	initialize()
 }
 
 def initialize() {
-	log.info "Thinking Cleaner ${textVersion()}"
+	if (settings.debug_pref == true) log.info "Thinking Cleaner ${textVersion()}"
 	ipSetup()
 	poll()
 }
@@ -318,7 +318,7 @@ def off() {
 }
 
 def poll() {
-	log.debug "Executing 'poll'"
+	if (settings.debug_pref == true) log.debug "Executing 'poll'"
     
 	if (device.deviceNetworkId != null) {
 		api('refresh')
@@ -327,18 +327,18 @@ def poll() {
 		sendEvent(name: 'status', value: "error" as String)
 		sendEvent(name: 'network', value: "Not Connected" as String)
         sendEvent(name: 'bin', value: "default" as String)
-		log.debug "Device Network ID Not set"
+		if (settings.debug_pref == true) log.debug "Device Network ID Not set"
 	}
 }
 
 def refresh() {
-	log.debug "Executing 'refresh'"
+	if (settings.debug_pref == true) log.debug "Executing 'refresh'"
 	ipSetup()
 	api('refresh')
 }
 
 def beep() {
-	log.debug "Executing 'beep'"
+	if (settings.debug_pref == true) log.debug "Executing 'beep'"
 	ipSetup()
 	api('beep')
 }
@@ -350,19 +350,19 @@ def api(String rooCommand, success = {}) {
 	if (device.currentValue('network') == "unknown"){
 		sendEvent(name: 'network', value: "Not Connected" as String)
         sendEvent(name: 'bin', value: "default" as String)
-		log.debug "Network is not connected"
+		if (settings.debug_pref == true) log.debug "Network is not connected"
 	}
 	else {
 		sendEvent(name: 'network', value: "unknown" as String, displayed:false)
 	}
 	switch (rooCommand) {
 		case "on":
-        log.debug "Clean mode is ${settings.cleanmode}"
-    	log.debug "Clean mode vlaue is ${cleanmodevalue}"
+        if (settings.debug_pref == true) log.debug "Clean mode is ${settings.cleanmode}"
+    	if (settings.debug_pref == true) log.debug "Clean mode vlaue is ${cleanmodevalue}"
         sendEvent(name: 'status', value: "cleaning" as String)
         if (cleanmodevalue == null)
 			rooPath = "/command.json?command=clean"
-			log.debug "The Clean Command was sent"
+			if (settings.debug_pref == true) log.debug "The Clean Command was sent"
         if (cleanmodevalue == "Clean")
 			rooPath = "/command.json?command=clean"
 			log.debug "The Clean Command was sent"
@@ -377,7 +377,7 @@ def api(String rooCommand, success = {}) {
 		break;
 		case "refresh":
 			rooPath = "/full_status.json"
-			log.debug "The Refresh Status Command was sent"
+			if (settings.debug_pref == true) log.debug "The Refresh Status Command was sent"
         	sendEvent(name: 'status', value: "default" as String)
 		break;
 		case "beep":
@@ -397,7 +397,7 @@ def api(String rooCommand, success = {}) {
 				headers: [HOST: "${settings.ip}:${settings.port}", Accept: "application/json"])
 			}
 			catch (Exception e) {
-				log.debug "Hit Exception $e on $hubAction"
+				if (settings.debug_pref == true) log.debug "Hit Exception $e on $hubAction"
 			}
 			break;
 		default:
@@ -409,7 +409,7 @@ def api(String rooCommand, success = {}) {
 				), delayAction(9800), api('refresh')]
 			}
 			catch (Exception e) {
-				log.debug "Hit Exception $e on $hubAction"
+				if (settings.debug_pref == true) log.debug "Hit Exception $e on $hubAction"
 			}
 			break;
 	}
@@ -443,5 +443,5 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	def text = "Version 1.4.9"
+	if (settings.debug_pref == true) def text = "Version 1.4.9"
 }
