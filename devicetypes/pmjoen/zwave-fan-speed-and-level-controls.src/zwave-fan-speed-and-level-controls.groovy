@@ -10,6 +10,7 @@
  * 20160517
  *  
  * v1.0 - Initial release of device handler
+ * v1.1 - Added low, med, high commands to work with CORE
  *  
 */
  
