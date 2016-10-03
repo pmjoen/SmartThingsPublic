@@ -26,6 +26,9 @@ metadata {
 		command "lowSpeed"
 		command "medSpeed"
 		command "highSpeed"
+        command "low"
+		command "med"
+		command "high"
 
 		attribute "currentState", "string"
 
@@ -256,12 +259,24 @@ def lowSpeed() {
 	setLevel("LOW")
 }
 
+def low() {
+	lowSpeed()
+}
+
 def medSpeed() {
 	setLevel("MED")
 }
 
+def med() {
+	medSpeed()
+}
+
 def highSpeed() {
 	setLevel("HIGH")
+}
+
+def high() {
+	highSpeed()
 }
 
 def poll() {

@@ -38,8 +38,10 @@ metadata {
 	// tile definitions
 	tiles {
 		standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-			state "on", label: 'Circulating', action: "switch.off", icon: "st.thermostat.fan-circulate", backgroundColor: "#79b821"
-			state "off", label: '${name}', action: "switch.on", icon: "st.thermostat.heating-cooling-off", backgroundColor: "#ffffff"
+//			state "on", label: 'Circulating', action: "switch.off", icon: "st.thermostat.fan-circulate", backgroundColor: "#79b821"
+            state "on", label: 'Circulating', action: "switch.off", icon: "st.valves.water.open", backgroundColor: "#79b821"
+//			state "off", label: '${name}', action: "switch.on", icon: "st.thermostat.heating-cooling-off", backgroundColor: "#ffffff"
+			state "off", label: '${name}', action: "switch.on", icon: "st.valves.water.closed", backgroundColor: "#ffffff"
 		}
 		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
