@@ -3,8 +3,9 @@
  *  
  *  Description:
  *  This app was built to provide a solution similar to Budweiser Red Light
- *  Select your favorite NHL team to turn on an outlet for 5 seconds then off.
- *  
+ *  Select your favorite NHL team to turn on an outlet for 5 seconds then off
+ *  when your team scores.
+ *
  *  Version: 1.0 - Initial Version
  */
 
@@ -22,9 +23,13 @@ preferences {
      section("NHL Team"){
          input "team", "enum", title: "Team Selection", required: true, displayDuringSetup: true, options: ["Avalanche","Blackhawks","Blue Jackets","Blues","Bruins","Canadiens","Canucks","Capitals","Coyotes","Devils","Ducks","Flames","Flyers","Hurricanes","Islanders","Jets","Kings","Lighting","Maple Leafs","Oilers","Panthers","Penguins","Predators","Rangers","Red Wings","Sabres","Senators","Sharks","Stars","Wild"]
     }
-    section (Outlet){
+    section(Switches){
          input "Controlled Devices", "capability.switch", title: "Devices Selection", required: true, multiple: true, displayDuringSetup: true
     }
+    // implement options speaker for audio later
+//    section (Speaker){
+//         input "Sound", "capability.audioNotification", title: "Devices Selection", required: false, displayDuringSetup: true
+//    }
     section("Debug Logging") {
          input "debug_pref", "bool", title: "Debug Logging", defaultValue: "false", displayDuringSetup: true
     }
@@ -45,40 +50,47 @@ def updated() {
 def initialize() {
 	log.info "NHL Goal Light ${textVersion()} ${textCopyright()}"
 	log.debug "Initialize with settings: ${settings}"
-	subscribe(master, "switch.on", switchOnHandler)
-	subscribe(master, "switch.off", switchOffHandler)
-    subscribe(location, "sunset", pollRestart)
-	subscribe(location, "sunrise", pollRestart)
+	updateScores()
+//	subscribe(master, "switch.on", switchOnHandler)
+//	subscribe(master, "switch.off", switchOffHandler)
+//    subscribe(location, "sunset", pollRestart)
+//	subscribe(location, "sunrise", pollRestart)
 }
 
-def params = [
-    uri: "http://scores.nbcsports.msnbc.com/ticker/data/gamesMSNBC.js.asp?jsonp=true&sport=NHL&period=20161004",
-]
+def updateScores() {
+	if (settings.debug_pref == true) log.debug "Requesting NHL Service"
+	def params = [
+		uri: "http://scores.nbcsports.msnbc.com/ticker/data/gamesMSNBC.js.asp?jsonp=true&sport=NHL&period=20161005",
+//        path: "date",
+        query: [
+        ]
+	]
 
 // def dateToday = Date.parse("yyyyMMdd", dateString)
 
-try {
-    httpGet(params) { resp ->
-        // iterate all the headers
-        // each header has a name and a value
-        resp.headers.each {
-           if (settings.debug_pref == true) log.debug "${it.name} : ${it.value}"
-        }
+	try {
+    	httpGet(params) { resp ->
+        	// iterate all the headers
+        	// each header has a name and a value
+        	resp.headers.each {
+           	if (settings.debug_pref == true) log.debug "${it.name} : ${it.value}"
+        	}
 
-        // get an array of all headers with the specified key
-        def theHeaders = resp.getHeaders("Content-Length")
+        	// get an array of all headers with the specified key
+        	def theHeaders = resp.getHeaders("Content-Length")
 
-        // get the contentType of the response
-        if (settings.debug_pref == true) log.debug "response contentType: ${resp.contentType}"
+        	// get the contentType of the response
+        	if (settings.debug_pref == true) log.debug "response contentType: ${resp.contentType}"
 
-        // get the status code of the response
-        if (settings.debug_pref == true) log.debug "response status code: ${resp.status}"
+        	// get the status code of the response
+        	if (settings.debug_pref == true) log.debug "response status code: ${resp.status}"
 
-        // get the data from the response body
-        if (settings.debug_pref == true) log.debug "response data: ${resp.data}"
-    }
-} catch (e) {
-    log.error "something went wrong: $e"
+        	// get the data from the response body
+        	if (settings.debug_pref == true) log.debug "response data: ${resp.data}"
+    	}
+ 	}catch (e) {
+    	log.error "something went wrong: $e"
+	}
 }
 
 def switchOnHandler(evt) {
