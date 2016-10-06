@@ -44,19 +44,18 @@ def updated() {
 
 def initialize() {
 	log.info "NHL Goal Light ${textVersion()} ${textCopyright()}"
-	if (settings.debug_pref == true) log.debug "Initialize with settings: ${settings}"
+	log.debug "Initialize with settings: ${settings}"
 	subscribe(master, "switch.on", switchOnHandler)
 	subscribe(master, "switch.off", switchOffHandler)
     subscribe(location, "sunset", pollRestart)
 	subscribe(location, "sunrise", pollRestart)
-	schedule("22 4 0/1 1/1 * ? *", pollOff)
-	pollOff
 }
 
 def params = [
-    uri: "http://scores.nbcsports.msnbc.com/ticker/data/gamesMSNBC.js.asp?jsonp=true&sport=NHL&period=%d'",
-    path: "/get"
+    uri: "http://scores.nbcsports.msnbc.com/ticker/data/gamesMSNBC.js.asp?jsonp=true&sport=NHL&period=20161004",
 ]
+
+// def dateToday = Date.parse("yyyyMMdd", dateString)
 
 try {
     httpGet(params) { resp ->
@@ -84,76 +83,12 @@ try {
 
 def switchOnHandler(evt) {
 	if (settings.debug_pref == true) log.debug "Switching on"
+    switches.on()
 }
 
 def switchOffHandler(evt) {
     if (settings.debug_pref == true) log.debug "Switching off"
-}
-
-def pollOff() {
-    def offSwitch1 = settings.switch1.currentSwitch.findAll { switchVal ->
-		switchVal == "off" ? true : false
-	}
-	settings.switch1.each() {
-		if (it.currentSwitch == "off") {
-			state.pollState = now()
-			it.poll()
-            runIn(3660, pollRestart, [overwrite: true])
-		}
-	}
-	if (offSwitch1.size() == 0) {
-		unschedule(pollOff)
-	}
-}
-
-def pollOn() {
-	def onSwitch1 = settings.switch1.currentSwitch.findAll { switchVal ->
-		switchVal == "on" ? true : false
-	}
-	settings.switch1.each() {
-		if (it.currentSwitch == "on") {
-			state.pollState = now()
-			it.poll()
-			runIn(80, pollRestartOn, [overwrite: true])
-		}
-	}
-	if (onSwitch1.size() == 0) {
-		unschedule(pollOn)
-	}
-}
-
-def pollErr() {
-	def errSwitch1 = settings.switch1.currentStatus.findAll { switchVal ->
-		switchVal == "error" ? true : false
-	}
-	settings.switch1.each() {
-		if (it.currentStatus == "error") {
-			state.pollState = now()
-			it.poll()
-		}
-	}
-	if (errSwitch1.size() == 0) {
-		unschedule(pollErr)
-	}
-}
-def pollRestartOn() {
-	def t = now() - state.pollState
-		if (t > 660000) {
-			unschedule(pollOn)
-			schedule("16 0/1 * 1/1 * ?", pollOn)
-			sendEvent(linkText:app.label, name:"Poll", value:"Restart",descriptionText:"Polling Restarted", eventType:"SOLUTION_EVENT", displayed: true)
-			log.trace "Polling Restarted"
-        }
-}
-
-def pollRestart(evt) {
-	def t = now() - state.pollState
-		if (t > 4200000) {
-			unschedule(pollOff)
-			schedule("23 4 0/1 1/1 * ? *", pollOff)
-			sendEvent(linkText:app.label, name:"Poll", value:"Restart",descriptionText:"Polling Restarted", eventType:"SOLUTION_EVENT", displayed: true)
-			log.trace "Polling Restarted"
-        }
+    switches.off()
 }
 
 private def textVersion() {
