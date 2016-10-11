@@ -443,5 +443,5 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	if (settings.debug_pref == true) def text = "Version 1.4.9"
+	if (settings.debug_pref == true) def text = "Version 1.5.0"
 }
