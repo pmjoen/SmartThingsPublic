@@ -28,6 +28,7 @@
  *	Version: 1.4.8 - Added clean mode setting for user selection. 
  *	Version: 1.4.9 - Added switch values back per feedback.  
  *	Version: 1.5.0 - Added debug option in preferences to remove unwated logging during normal operation. 
+ *	Version: 1.5.1 - Fixed issue where both Max Clean and Clean were being sent when turned On. 
  *
  */
  
@@ -360,15 +361,20 @@ def api(String rooCommand, success = {}) {
         if (settings.debug_pref == true) log.debug "Clean mode is ${settings.cleanmode}"
     	if (settings.debug_pref == true) log.debug "Clean mode vlaue is ${cleanmodevalue}"
         sendEvent(name: 'status', value: "cleaning" as String)
-        if (cleanmodevalue == null)
+        if (cleanmodevalue == null){
 			rooPath = "/command.json?command=clean"
 			if (settings.debug_pref == true) log.debug "The Clean Command was sent"
-        if (cleanmodevalue == "Clean")
+        }else{
+        	if (cleanmodevalue == "Clean"){
 			rooPath = "/command.json?command=clean"
-			log.debug "The Clean Command was sent"
-		if (cleanmodevalue == "Max Clean")
+			if (settings.debug_pref == true) log.debug "The Clean Command was sent"
+		}else{
+        	if (cleanmodevalue == "Max Clean"){
             rooPath = "/command.json?command=max"
-            log.debug "The Max Clean Command was sent"
+            if (settings.debug_pref == true) log.debug "The Max Clean Command was sent"
+            	}
+        	}
+        }
 		break;
 		case "off":
 			rooPath = "/command.json?command=dock"
