@@ -334,6 +334,7 @@ def poll() {
 
 def refresh() {
 	if (settings.debug_pref == true) log.debug "Executing 'refresh'"
+    if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 	ipSetup()
 	api('refresh')
 }
