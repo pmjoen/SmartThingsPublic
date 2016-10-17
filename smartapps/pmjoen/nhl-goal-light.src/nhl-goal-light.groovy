@@ -2,9 +2,11 @@
  *  Hockey Goal Red Light
  *  
  *  Description:
- *  This app was built to provide a solution similar to Budweiser Red Light
- *  Select your favorite NHL team to turn on an outlet for 5 seconds then off
- *  when your team scores.
+ *  This app was built to provide a solution similar to Budweiser Red Light.
+ *  Select your favorite NHL team to turn on switches when your team scores
+ *  And then off a few seconds later. (Use a siren light)
+ *
+ *  Future solution will be to add Sonos to play your teams goal song.
  *
  *  Version: 1.0 - Initial Version
  */
