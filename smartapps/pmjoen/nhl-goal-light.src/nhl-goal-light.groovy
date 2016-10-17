@@ -21,7 +21,7 @@ definition(
 
 preferences {
      section("NHL Team"){
-         input "team", "enum", title: "Team Selection", required: true, displayDuringSetup: true, options: ["Avalanche","Blackhawks","Blue Jackets","Blues","Bruins","Canadiens","Canucks","Capitals","Coyotes","Devils","Ducks","Flames","Flyers","Hurricanes","Islanders","Jets","Kings","Lighting","Maple Leafs","Oilers","Panthers","Penguins","Predators","Rangers","Red Wings","Sabres","Senators","Sharks","Stars","Wild"]
+         input "Team", "enum", title: "Team Selection", required: true, displayDuringSetup: true, options: ["Avalanche","Blackhawks","Blue Jackets","Blues","Bruins","Canadiens","Canucks","Capitals","Coyotes","Devils","Ducks","Flames","Flyers","Hurricanes","Islanders","Jets","Kings","Lighting","Maple Leafs","Oilers","Panthers","Penguins","Predators","Rangers","Red Wings","Sabres","Senators","Sharks","Stars","Wild"]
     }
     section(Switches){
          input "Controlled Devices", "capability.switch", title: "Devices Selection", required: true, multiple: true, displayDuringSetup: true
@@ -30,6 +30,9 @@ preferences {
 //    section (Speaker){
 //         input "Sound", "capability.audioNotification", title: "Devices Selection", required: false, displayDuringSetup: true
 //    }
+	section(Delay){
+         input "Delay", "enum", title: "Delay Action In Seconds", required: true, multiple: false, displayDuringSetup: true, options: ["1","2","3","4","5","6","7","8","9","10"]
+    }
     section("Debug Logging") {
          input "debug_pref", "bool", title: "Debug Logging", defaultValue: "false", displayDuringSetup: true
     }
@@ -50,22 +53,21 @@ def updated() {
 def initialize() {
 	log.info "NHL Goal Light ${textVersion()} ${textCopyright()}"
 	log.debug "Initialize with settings: ${settings}"
+    runScoreUpdate()
+}
+
+def runScoreUpdate() {
 	updateScores()
-//	subscribe(master, "switch.on", switchOnHandler)
-//	subscribe(master, "switch.off", switchOffHandler)
-//    subscribe(location, "sunset", pollRestart)
-//	subscribe(location, "sunrise", pollRestart)
 }
 
 def updateScores() {
+    def todaysDate = new Date().format('yyyyMMdd')
+    log.debug "Date is: ${todaysDate}"
 	if (settings.debug_pref == true) log.debug "Requesting NHL Service"
 	def params = [
-		uri: "http://scores.nbcsports.msnbc.com/ticker/data/gamesMSNBC.js.asp?jsonp=true&sport=NHL&period=20161005",
-//        path: "date",
-        query: [
-        ]
+		uri: "http://scores.nbcsports.msnbc.com/ticker/data/gamesMSNBC.js.asp?jsonp=true&sport=NHL&period=${todaysDate}",
 	]
-
+    log.debug "URL: ${params}"
 // def dateToday = Date.parse("yyyyMMdd", dateString)
 
 	try {
@@ -84,21 +86,21 @@ def updateScores() {
 
         	// get the status code of the response
         	if (settings.debug_pref == true) log.debug "response status code: ${resp.status}"
-
         	// get the data from the response body
-        	if (settings.debug_pref == true) log.debug "response data: ${resp.data}"
+        	log.debug "Response data: ${resp.data}" 
+            log.debug "Games: ${games}"
     	}
  	}catch (e) {
     	log.error "something went wrong: $e"
 	}
 }
 
-def switchOnHandler(evt) {
+def goalScoredOn() {
 	if (settings.debug_pref == true) log.debug "Switching on"
     switches.on()
 }
 
-def switchOffHandler(evt) {
+def goalScoredOff() {
     if (settings.debug_pref == true) log.debug "Switching off"
     switches.off()
 }
