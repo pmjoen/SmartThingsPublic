@@ -29,6 +29,7 @@
  *	Version: 1.4.9 - Added switch values back per feedback.  
  *	Version: 1.5.0 - Added debug option in preferences to remove unwated logging during normal operation. 
  *	Version: 1.5.1 - Fixed issue where both Max Clean and Clean were being sent when turned On. 
+ *	Version: 1.5.2 - Fixed error handling that was causing incorrect notifications in Thinking Cleanerer smart app. Also added 2 more status's (wait and off)
  *
  */
  
@@ -73,7 +74,8 @@ metadata {
 				attributeState "cleaning", label:'${currentValue}', action:"switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#79b821", nextState:"docking"
 				attributeState "docked", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#ffffff", nextState:"cleaning"
 				attributeState "docking", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#D3D3D3", nextState:"docked"
-				attributeState "error", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171468/c406f4e8-7027-11e6-9ead-d133313cc0f2.png", backgroundColor: "#FF0000"
+				attributeState "off", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#D3D3D3", nextState:"cleaning"				
+                attributeState "error", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171468/c406f4e8-7027-11e6-9ead-d133313cc0f2.png", backgroundColor: "#FF0000"
 				attributeState "paused", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#D3D3D3", nextState:"cleaning"
 				attributeState "delayed", label:'${currentValue}', action:"switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171514/ed458b94-7027-11e6-9cf9-3060d3d4743a.png", backgroundColor: "#D3D3D3", nextState:"cleaning"
 				attributeState "findme", label:'${currentValue}', icon: "https://cloud.githubusercontent.com/assets/8125308/18171531/010647e0-7028-11e6-92c3-46ecc2a8353e.png", backgroundColor: "#D3D3D3"
@@ -123,9 +125,10 @@ def parse(String description) {
 		slurper = new JsonSlurper()
 		result = slurper.parseText(bodyString)
 // Shows JSON response
-        if (settings.debug_pref == true) log.debug bodyString
-        if (settings.debug_pref == true)  log.info "Firmware Version ${result.firmware.version}"
+		if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+        if (settings.debug_pref == true) log.info "Firmware Version ${result.firmware.version}"
         if (settings.debug_pref == true) log.info "Model Number ${result.tc_status.modelnr}"
+        if (settings.debug_pref == true) log.debug bodyString
 		switch (result.action) {
 			case "command":
 				sendEvent(name: 'network', value: "Connected" as String)
@@ -170,6 +173,11 @@ def parse(String description) {
                     sendEvent(name: 'beep', value: "inactive" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
+                case "st_wait":
+					sendEvent(name: 'status', value: "paused" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
+					sendEvent(name: 'switch', value: "off" as String)
+				break;                
 				case "st_plug":
 					sendEvent(name: 'status', value: "plugged" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
@@ -191,12 +199,13 @@ def parse(String description) {
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_plug_wait":
-					sendEvent(name: 'status', value: "plugged" as String)
+					sendEvent(name: 'status', value: "off" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_stopped":
 					sendEvent(name: 'status', value: "paused" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
 				case "st_cleanstop":
@@ -225,7 +234,8 @@ def parse(String description) {
 						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
-						sendEvent(name: 'status', value: "error" as String)
+                        sendEvent(name: 'status', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "off" as String)
 					}
 				break;
@@ -237,8 +247,9 @@ def parse(String description) {
 						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
-						sendEvent(name: 'status', value: "error" as String) 
-						sendEvent(name: 'switch', value: "off" as String)                     
+                        sendEvent(name: 'status', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+						sendEvent(name: 'switch', value: "off" as String)                   
 					}
 				break;
 				case "st_clean_max":
@@ -249,8 +260,8 @@ def parse(String description) {
 						sendEvent(name: 'switch', value: "on" as String)
 					}
 					else {
-						sendEvent(name: 'status', value: "error" as String)
-                        sendEvent(name: 'beep', value: "inactive" as String)
+                        sendEvent(name: 'status', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "off" as String)
 					}
 				break;
@@ -266,7 +277,7 @@ def parse(String description) {
 					}
 				break;
 				case "st_off":
-					sendEvent(name: 'status', value: "error" as String)
+					sendEvent(name: 'status', value: "off" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
@@ -281,7 +292,7 @@ def parse(String description) {
 	}
 	else {
 		sendEvent(name: 'status', value: "error" as String)
-		sendEvent(name: 'network', value: "Not Connected" as String)
+		sendEvent(name: 'network', value: "default" as String)
         sendEvent(name: 'beep', value: "inactive" as String)
         sendEvent(name: 'bin', value: "default" as String)
 		if (settings.debug_pref == true) log.debug headerString
@@ -292,17 +303,17 @@ def parse(String description) {
 // handle commands
 
 def installed() {
-	if (settings.debug_pref == true) log.debug "Installed with settings: ${settings}"
+	log.debug "Installed with settings: ${settings}"
 	initialize()
 }
 
 def updated() {
-    if (settings.debug_pref == true) log.debug "Updated with settings: ${settings}"
+    log.debug "Updated with settings: ${settings}"
 	initialize()
 }
 
 def initialize() {
-	if (settings.debug_pref == true) log.info "Thinking Cleaner ${textVersion()}"
+	log.info "Thinking Cleaner ${textVersion()}"
 	ipSetup()
 	poll()
 }
@@ -334,7 +345,6 @@ def poll() {
 
 def refresh() {
 	if (settings.debug_pref == true) log.debug "Executing 'refresh'"
-    if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 	ipSetup()
 	api('refresh')
 }
@@ -350,7 +360,7 @@ def api(String rooCommand, success = {}) {
 	def hubAction
 	def cleanmodevalue = "${settings.cleanmode}"
 	if (device.currentValue('network') == "unknown"){
-		sendEvent(name: 'network', value: "Not Connected" as String)
+		sendEvent(name: 'network', value: "default" as String)
         sendEvent(name: 'bin', value: "default" as String)
 		if (settings.debug_pref == true) log.debug "Network is not connected"
 	}
@@ -450,5 +460,5 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	if (settings.debug_pref == true) def text = "Version 1.5.1"
+	if (settings.debug_pref == true) def text = "Version 1.5.2"
 }
