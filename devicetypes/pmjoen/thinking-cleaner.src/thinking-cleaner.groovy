@@ -445,7 +445,7 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	if (settings.debug_pref == true) def text = "Version 1.5.3"
+	def text = "Version 2.0"
 }
 
 private def textCopyright() {
