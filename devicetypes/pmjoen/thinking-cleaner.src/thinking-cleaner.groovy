@@ -2,7 +2,9 @@
  *  Thinking Cleaner
  *
  *	Smartthings Devicetype
- *  Variation of the Sidney Johnson "sidjohn1" Device Handler
+ *
+ *  If you like this device, please donate the developers perfered local charity "RMHC of Chicagoland & Northwest Indiana":
+ *  https://secure2.convio.net/rmhci/site/Donation2;jsessionid=00000000.app261a?idb=2061823896&DONATION_LEVEL_ID_SELECTED=1&df_id=1663&mfc_pref=T&1663.donation=form1&NONCE_TOKEN=43EC125CCF455C2098CE98B9235BF56D&idb=0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -13,25 +15,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	Version: 1.0 - Initial Version
- *	Version: 1.1 - Fixed installed and updated functions
- *	Version: 1.2 - Added error tracking, and better icons, link state
- *	Version: 1.3 - Better error tracking, error correction and the ability to change the default port (thx to sidhartha100), fix a bug that prevented auto population of deviceNetworkId
- *	Version: 1.4 - Added bin status and code clean up
- *	Version: 1.4.1 - Added poll on inilizition, better error handling, improved clean button
- *	Version: 1.4.2 - Added JSON response mapping, Multi attribute status tile (more statuses), all new icons, modified labels and buttons.
- *	Version: 1.4.3 - Added actions for multi-attribute status tile, added actions for buttons, changed visual texts, all new images.
- *	Version: 1.4.4 - Removed Spot and Clean/Max buttons as Multi-attribute tile now acts as the clean/dock button.  Code clean up.
- *	Version: 1.4.5 - Modified find button to disable if status doesnt allow action.
- *	Version: 1.4.6 - Added capabilities to work with Smarttiles 6. 
- *	Version: 1.4.7 - Added status for plugged, new plugged in image, cleaned up code.  
- *	Version: 1.4.8 - Added clean mode setting for user selection. 
- *	Version: 1.4.9 - Added switch values back per feedback.  
- *	Version: 1.5.0 - Added debug option in preferences to remove unwated logging during normal operation. 
- *	Version: 1.5.1 - Fixed issue where both Max Clean and Clean were being sent when turned On. 
- *	Version: 1.5.2 - Fixed error handling that was causing incorrect notifications in Thinking Cleanerer smart app. Also added 2 more status's (wait and off)
- *	Version: 1.5.3 - Fixed status st_off to show error instead of off
- *
+ *  Version 2.0 - Re-release of application with new ownership and community support
  */
  
 import groovy.json.JsonSlurper
@@ -314,7 +298,7 @@ def updated() {
 }
 
 def initialize() {
-	log.info "Thinking Cleaner ${textVersion()}"
+	log.info "Thinking Cleaner ${textVersion()} ${textCopyright()}"
 	ipSetup()
 	poll()
 }
@@ -462,4 +446,8 @@ private delayAction(long time) {
 
 private def textVersion() {
 	if (settings.debug_pref == true) def text = "Version 1.5.3"
+}
+
+private def textCopyright() {
+	def text = "Copyright © 2016 pmjoen"
 }
