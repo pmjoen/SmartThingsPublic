@@ -30,6 +30,7 @@
  *	Version: 1.5.0 - Added debug option in preferences to remove unwated logging during normal operation. 
  *	Version: 1.5.1 - Fixed issue where both Max Clean and Clean were being sent when turned On. 
  *	Version: 1.5.2 - Fixed error handling that was causing incorrect notifications in Thinking Cleanerer smart app. Also added 2 more status's (wait and off)
+ *	Version: 1.5.3 - Fixed status st_off to show error instead of off
  *
  */
  
@@ -277,7 +278,7 @@ def parse(String description) {
 					}
 				break;
 				case "st_off":
-					sendEvent(name: 'status', value: "off" as String)
+					sendEvent(name: 'status', value: "error" as String)
                     sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
 				break;
@@ -460,5 +461,5 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	if (settings.debug_pref == true) def text = "Version 1.5.2"
+	if (settings.debug_pref == true) def text = "Version 1.5.3"
 }
