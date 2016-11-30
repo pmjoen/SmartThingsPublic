@@ -1,6 +1,9 @@
 /**
  *  Thinking Cleanerer
  *  Smartthings SmartApp
+ * 
+ *  If you like this device, please donate the developers perfered local charity "RMHC of Chicagoland & Northwest Indiana":
+ *  https://secure2.convio.net/rmhci/site/Donation2;jsessionid=00000000.app261a?idb=2061823896&DONATION_LEVEL_ID_SELECTED=1&df_id=1663&mfc_pref=T&1663.donation=form1&NONCE_TOKEN=43EC125CCF455C2098CE98B9235BF56D&idb=0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -11,15 +14,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	Version: 1.0 - Initial Version
- *	Version: 1.2 - Added error push notifcation, and better icons
- *	Version: 1.3 - New interface, better polling, and logging. Added sms notifcations
- *	Version: 1.4 - Added bin full notifcations
- *	Version: 1.4.1 - Fixed SMS send issue
- *	Version: 1.4.2 - Fixed No such property: currentSwitch issue, added poll on initialize, locked to single instance
- *	Version: 1.5 - More robust polling, auto set Smart Home Monitor
- *	Version: 1.5.1 - Even more robust polling
- *  Version: 1.5.2 - Updated default value to fix install error
+ *	Version: 2.0 - Initial Version
  */
  
 definition(
@@ -88,7 +83,7 @@ def updated() {
 }
 
 def initialize() {
-	log.info "Thinking Cleanerer ${textVersion()} ${textCopyright()}"
+	log.info "Thinking Cleaner ${textVersion()} ${textCopyright()}"
 	subscribe(switch1, "switch.on", eventHandler)
 	subscribe(switch1, "switch.off", eventHandler)
 	subscribe(switch1, "status.error", eventHandler)
@@ -245,7 +240,7 @@ def pollRestart(evt) {
 }
 
 private def textVersion() {
-    def text = "Version 1.5.2"
+    def text = "Version 2.0"
 }
 
 private def textCopyright() {
