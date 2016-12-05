@@ -236,9 +236,8 @@ private takeAction(evt) {
 
 private loadText() {
 	switch ( actionType) {
-		case "Goal Scored Blackhawks":
-        	state.sound = [uri: "http://s3.amazonaws.com/alexavoicenotifications/MailArrived.mp3", duration: "5"]
-//        	state.sound = [uri: "http://s3.amazonaws.com/nhlgoallightsong/${settings.team}.mp3", duration: "${settings.soundDuration}"]
+		case "Goal Scored":
+        	state.sound = [uri: "http://s3.amazonaws.com/nhlgoallightsong/${settings.team}.mp3", duration: "${settings.soundDuration}"]
             if (settings.debug_pref == true) log.debug "Playing goal song for ${settings.team} for ${settings.soundDuration} seconds"
 			break;
 		default:
@@ -246,8 +245,8 @@ private loadText() {
 				state.sound = textToSpeech(message instanceof List ? message[0] : message) // not sure why this is (sometimes) needed)
 			}
 			else {
-				state.sound = textToSpeech("No ${settings.team} song available for $app.label Smart App")
-//        		state.sound = [uri: "http://s3.amazonaws.com/nhlgoallightsong/Siren.mp3${settings.team}", duration: "${settings.soundDuration}"]
+            	log.debug "No ${settings.team} song available for $app.label Smart App"
+        		state.sound = [uri: "http://s3.amazonaws.com/nhlgoallightsong/Siren.mp3${settings.team}", duration: "${settings.soundDuration}"]
 			}
 			break;
 	}
