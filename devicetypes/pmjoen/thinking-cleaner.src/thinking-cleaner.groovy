@@ -16,7 +16,8 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *  Version 2.0 - Re-release of application with new ownership and community support
- */
+ *  Version 2.1 - Clean and Max Clean made available for CoRE. 
+*/
  
 import groovy.json.JsonSlurper
 
@@ -30,7 +31,9 @@ metadata {
         capability "Sensor"
         capability "Actuator"
         
-		command "refresh"      
+		command "refresh"  
+        command "Clean"
+        command "MaxClean"
 
 		attribute "network","string"
 		attribute "bin","string"
@@ -42,10 +45,16 @@ metadata {
 			input("port", "number", title: "Port Number", description: "Your Thinking Cleaner Port Number (Default:80)", defaultValue: "80", required: true, displayDuringSetup: true)
         }
         section("Cleaning Mode") {
-        	input "cleanmode", "enum", title: "Clean Mode", defaultValue: "Clean", required: true, displayDuringSetup: true, options: ["Clean","Max Clean"]
+        	input "cleanmode", "enum", title: "Clean Mode", defaultValue: "Clean", required: false, displayDuringSetup: true, options: ["Clean","Max Clean"]
+        }
+        section("Delayed Cleaning") {
+        	input "delay", "enum", title: "Cleaning Delayed (xx) Minutes", defaultValue: "60", required: false, displayDuringSetup: true, options: ["30","60","90","120","150","180","210","240"]
         }
         section("Debug Logging") {
-        	input "debug_pref", "bool", title: "Debug Logging", defaultValue: "false", displayDuringSetup: true
+        	input "debug_pref", "bool", title: "Debug Logging", defaultValue: "true", displayDuringSetup: true
+        }
+        section("Extended Debug Logging") {
+        	input "debug_ext", "bool", title: "Extended Debug Logging", defaultValue: "false", displayDuringSetup: true
         }
 	}
 
@@ -69,10 +78,6 @@ metadata {
 				attributeState "batery", label:'${currentValue}% Battery'
 			}
          }
-        standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
-			state "inactive", label:'disabled', icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#D3D3D3"
-			state "beep", label:'find', action:"tone.beep", icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#ffffff"
-		}
         standardTile("network", "device.network", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
 			state ("default", label:'Link', icon: "st.unknown.unknown.unknown")
 			state ("Connected", label:'Conected', icon: "https://cloud.githubusercontent.com/assets/8125308/18180862/59c9a3c4-704e-11e6-872e-5b1230bc4a5f.png", backgroundColor: "#79b821")
@@ -81,10 +86,14 @@ metadata {
         standardTile("bin", "device.bin", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
 			state ("default", label:'Bin', icon: "st.unknown.unknown.unknown")
 			state ("empty", label:'Bin Empty', icon: "https://cloud.githubusercontent.com/assets/8125308/18180772/eb692f80-704d-11e6-9a10-76f63cf69c95.png", backgroundColor: "#79b821")
-			state ("full", label:'Bin Full', icon: "https://cloud.githubusercontent.com/assets/8125308/18180772/eb692f80-704d-11e6-9a10-76f63cf69c95.png", backgroundColor: "#bc2323")
+			state ("full", label:'Bin Full', icon: "https://cloud.githubusercontent.com/assets/8125308/18180772/eb692f80-704d-11e6-9a10-76f63cf69c95.png", backgroundColor: "#E5E500")
 		}
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
 			state("default", action:"refresh.refresh", icon:"st.secondary.refresh")
+		}
+        standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+			state "inactive", label:'disabled', icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#D3D3D3"
+			state "beep", label:'find', action:"tone.beep", icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#ffffff"
 		}
         standardTile("clean", "device.switch", width: 1, height: 1, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
 			state("on", label: 'dock', action: "switch.off", icon: "st.Appliances.appliances13", backgroundColor: "#79b821", nextState:"off")
@@ -92,7 +101,7 @@ metadata {
 		}
 
         main("status")
-			details(["status","network","bin","beep","refresh"])        
+			details(["status","network","bin","refresh","beep"])        
 		}
 }
 
@@ -113,7 +122,7 @@ def parse(String description) {
 		if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
         if (settings.debug_pref == true) log.info "Firmware Version ${result.firmware.version}"
         if (settings.debug_pref == true) log.info "Model Number ${result.tc_status.modelnr}"
-        if (settings.debug_pref == true) log.debug bodyString
+        if (settings.debug_ext == true) log.debug bodyString
 		switch (result.action) {
 			case "command":
 				sendEvent(name: 'network', value: "Connected" as String)
@@ -129,84 +138,114 @@ def parse(String description) {
 				break;
 				case "1":
 					sendEvent(name: 'bin', value: "full" as String)
-                    if (settings.debug_pref == true) log.debug "Bin status 'Full'"
+                    if (settings.debug_ext == true) log.debug "Bin status 'Full'"
 				break;
 			}
 			switch (result.power_status.cleaner_state) {
 				case "st_base":
 					sendEvent(name: 'status', value: "docked" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "delayClean" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_recon":
 					sendEvent(name: 'status', value: "charging" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "delayClean" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_full":
 					sendEvent(name: 'status', value: "charging" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "delayClean" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_base_trickle":
 					sendEvent(name: 'status', value: "docked" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "delayClean" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_base_wait":
 					sendEvent(name: 'status', value: "docked" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "delayClean" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
                 case "st_wait":
 					sendEvent(name: 'status', value: "paused" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;                
 				case "st_plug":
 					sendEvent(name: 'status', value: "plugged" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_plug_recon":
 					sendEvent(name: 'status', value: "pluggedcharge" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_plug_full":
 					sendEvent(name: 'status', value: "pluggedcharge" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_plug_trickle":
 					sendEvent(name: 'status', value: "plugged" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 				case "st_plug_wait":
 					sendEvent(name: 'status', value: "off" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_stopped":
 					sendEvent(name: 'status', value: "paused" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                   sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_cleanstop":
 					sendEvent(name: 'status', value: "paused" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_delayed":
 					sendEvent(name: 'status', value: "delayed" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_pickup":
 					sendEvent(name: 'status', value: "paused" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				case "st_locate":
 					sendEvent(name: 'status', value: "findme" as String)
@@ -215,39 +254,51 @@ def parse(String description) {
                    	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
-                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 					}
 					else {
                         sendEvent(name: 'status', value: "default" as String)
-                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "off" as String)
+                        sendEvent(name: 'stop', value: "default" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 					}
 				break;
 				case "st_clean_spot":
                     if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
-                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 					}
 					else {
-                        sendEvent(name: 'status', value: "default" as String)
+                        sendEvent(name: 'status', value: "error" as String)
+						sendEvent(name: 'switch', value: "off" as String) 
+                        sendEvent(name: 'stop', value: "default" as String)
+                    	sendEvent(name: 'delay', value: "default" as String) 
                         sendEvent(name: 'beep', value: "beep" as String)
-						sendEvent(name: 'switch', value: "off" as String)                   
 					}
 				break;
 				case "st_clean_max":
                    	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
-                        sendEvent(name: 'beep', value: "beep" as String)
 						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 					}
 					else {
-                        sendEvent(name: 'status', value: "default" as String)
-                        sendEvent(name: 'beep', value: "beep" as String)
+                        sendEvent(name: 'status', value: "error" as String)
 						sendEvent(name: 'switch', value: "off" as String)
+                        sendEvent(name: 'stop', value: "default" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 					}
 				break;
 				case "st_dock":
@@ -255,21 +306,32 @@ def parse(String description) {
 					if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "docking" as String)
 						sendEvent(name: 'switch', value: "on" as String)
+                        sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
 					}
 					else {
 						sendEvent(name: 'status', value: "error" as String)
 						sendEvent(name: 'switch', value: "off" as String)
+                        sendEvent(name: 'stop', value: "default" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "inactive" as String)
 					}
 				break;
 				case "st_off":
 					sendEvent(name: 'status', value: "error" as String)
-                    sendEvent(name: 'beep', value: "beep" as String)
 					sendEvent(name: 'switch', value: "off" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "beep" as String)
 				break;
 				default:
 					sendEvent(name: 'status', value: "default" as String)
-                    sendEvent(name: 'beep', value: "inactive" as String)
+                    sendEvent(name: 'switch', value: "off" as String)
                     sendEvent(name: 'bin', value: "default" as String)
+                    sendEvent(name: 'stop', value: "default" as String)
+                    sendEvent(name: 'delay', value: "default" as String)
+                    sendEvent(name: 'beep', value: "inactive" as String)
 				break;
 			}
 			break;
@@ -277,9 +339,12 @@ def parse(String description) {
 	}
 	else {
 		sendEvent(name: 'status', value: "error" as String)
+        sendEvent(name: 'switch', value: "off" as String)
 		sendEvent(name: 'network', value: "default" as String)
-        sendEvent(name: 'beep', value: "inactive" as String)
         sendEvent(name: 'bin', value: "default" as String)
+        sendEvent(name: 'stop', value: "default" as String)
+        sendEvent(name: 'delay', value: "default" as String)
+        sendEvent(name: 'beep', value: "inactive" as String)
 		if (settings.debug_pref == true) log.debug headerString
 	}
 	parse
@@ -304,28 +369,16 @@ def initialize() {
 }
 
 def on() {
+	if (settings.debug_pref == true) log.debug "Executing 'on'"
 	log.debug "Executing 'on'"
 	ipSetup()
 	api('on')
 }
 
 def off() {
+	if (settings.debug_pref == true) log.debug "Executing 'off'"
 	log.debug "Executing 'off'"
 	api('off')
-}
-
-def poll() {
-	if (settings.debug_pref == true) log.debug "Executing 'poll'"
-    
-	if (device.deviceNetworkId != null) {
-		api('refresh')
-	}
-	else {
-		sendEvent(name: 'status', value: "error" as String)
-		sendEvent(name: 'network', value: "Not Connected" as String)
-        sendEvent(name: 'bin', value: "default" as String)
-		if (settings.debug_pref == true) log.debug "Device Network ID Not set"
-	}
 }
 
 def refresh() {
@@ -340,13 +393,46 @@ def beep() {
 	api('beep')
 }
 
+def Clean(){
+	if (settings.debug_pref == true) log.debug "Executing 'CoRE cleaning'"
+	ipSetup()
+	api('clean')  
+}
+
+def MaxClean(){
+	if (settings.debug_pref == true) log.debug "Executing 'CoRE Max cleaning'"
+	ipSetup()
+	api('maxclean')  
+}
+
+def poll() {
+	if (settings.debug_pref == true) log.debug "Executing 'poll'"
+	if (device.deviceNetworkId != null) {
+		api('refresh')
+        if (settings.debug_pref == true) log.debug "Device Network ID Set"
+	}
+	else {
+		sendEvent(name: 'status', value: "error" as String)
+		sendEvent(name: 'network', value: "Not Connected" as String)
+        sendEvent(name: 'bin', value: "default" as String)
+        sendEvent(name: 'stop', value: "default" as String)
+        sendEvent(name: 'delay', value: "default" as String)
+        sendEvent(name: 'beep', value: "inactive" as String)
+		if (settings.debug_pref == true) log.debug "Device Network ID Not set"
+	}
+}
+
 def api(String rooCommand, success = {}) {
 	def rooPath
 	def hubAction
 	def cleanmodevalue = "${settings.cleanmode}"
 	if (device.currentValue('network') == "unknown"){
+    	sendEvent(name: 'status', value: "default" as String)
 		sendEvent(name: 'network', value: "default" as String)
         sendEvent(name: 'bin', value: "default" as String)
+        sendEvent(name: 'stop', value: "default" as String)
+        sendEvent(name: 'delay', value: "default" as String)
+        sendEvent(name: 'beep', value: "inactive" as String)
 		if (settings.debug_pref == true) log.debug "Network is not connected"
 	}
 	else {
@@ -359,15 +445,15 @@ def api(String rooCommand, success = {}) {
         sendEvent(name: 'status', value: "cleaning" as String)
         if (cleanmodevalue == null){
 			rooPath = "/command.json?command=clean"
-			if (settings.debug_pref == true) log.debug "The Clean Command was sent"
+			log.debug "Clean Mode not set, default clean sent"
         }else{
         	if (cleanmodevalue == "Clean"){
 			rooPath = "/command.json?command=clean"
-			if (settings.debug_pref == true) log.debug "The Clean Command was sent"
+			log.debug "The Clean Command was sent"
 		}else{
         	if (cleanmodevalue == "Max Clean"){
             rooPath = "/command.json?command=max"
-            if (settings.debug_pref == true) log.debug "The Max Clean Command was sent"
+            log.debug "The Max Clean Command was sent"
             	}
         	}
         }
@@ -377,15 +463,32 @@ def api(String rooCommand, success = {}) {
 			log.debug "The Dock Command was sent"
             sendEvent(name: 'status', value: "docking" as String)
 		break;
+        case "clean":
+        rooPath = "/command.json?command=clean"
+        	sendEvent(name: 'status', value: "cleaning" as String)
+			log.debug "The CoRE Clean Command was sent"
+        break;
+        case "maxclean":
+        rooPath = "/command.json?command=max"
+        	sendEvent(name: 'status', value: "cleaning" as String)
+			log.debug "The CoRE MAX Clean Command was sent"
+        break;
 		case "refresh":
 			rooPath = "/full_status.json"
-			if (settings.debug_pref == true) log.debug "The Refresh Status Command was sent"
+			log.debug "The Refresh Status Command was sent"
         	sendEvent(name: 'status', value: "default" as String)
 		break;
 		case "beep":
 			rooPath = "/command.json?command=find_me"
 			log.debug "The Beep Command was sent"
-            sendEvent(name: 'status', value: "default" as String)
+		break;
+        case "delayclean":
+            rooPath = "/command.json?command=CleanDelay&minutes=${settings.delay}"
+			log.debug "The Delayed Clean Command was sent for ${settings.delay} Minutes"
+		break;
+        case "drivestop":
+			rooPath = "/command.json?command=drivestop"
+			log.debug "The Pause/Stop Command was sent"
 		break;
 	}
     
@@ -445,7 +548,7 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	def text = "Version 2.0"
+	def text = "Version 2.1"
 }
 
 private def textCopyright() {
