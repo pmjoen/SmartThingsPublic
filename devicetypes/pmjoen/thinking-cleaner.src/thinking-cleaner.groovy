@@ -20,8 +20,7 @@
  *  			- Added extended debuging to remove full JSON response when not required. 
  *  Version 2.2 - Added pause cleaning mode.  
  *  			- Modified beep status update.
- *  			- Fixed bug for error when undocking before cleaning. 
- *  Version 2.3 - Added delayed cleaning mode. (with choice of delay in minutes)  
+ *  			- Fixed bug for error when undocking before cleaning.  
 */
  
 import groovy.json.JsonSlurper
