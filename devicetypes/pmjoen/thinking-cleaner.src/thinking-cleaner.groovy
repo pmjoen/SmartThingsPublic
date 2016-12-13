@@ -16,7 +16,12 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *  Version 2.0 - Re-release of application with new ownership and community support
- *  Version 2.1 - Clean and Max Clean made available for CoRE. 
+ *  Version 2.1 - Clean and Max Clean made available for CoRE.
+ *  			- Added extended debuging to remove full JSON response when not required. 
+ *  Version 2.2 - Added pause cleaning mode.  
+ *  			- Modified beep status update.
+ *  			- Fixed bug for error when undocking before cleaning. 
+ *  Version 2.3 - Added delayed cleaning mode. (with choice of delay in minutes)  
 */
  
 import groovy.json.JsonSlurper
@@ -34,6 +39,7 @@ metadata {
 		command "refresh"  
         command "Clean"
         command "MaxClean"
+        command "stopClean"
 
 		attribute "network","string"
 		attribute "bin","string"
@@ -47,14 +53,11 @@ metadata {
         section("Cleaning Mode") {
         	input "cleanmode", "enum", title: "Clean Mode", defaultValue: "Clean", required: false, displayDuringSetup: true, options: ["Clean","Max Clean"]
         }
-        section("Delayed Cleaning") {
-        	input "delay", "enum", title: "Cleaning Delayed (xx) Minutes", defaultValue: "60", required: false, displayDuringSetup: true, options: ["30","60","90","120","150","180","210","240"]
-        }
         section("Debug Logging") {
-        	input "debug_pref", "bool", title: "Debug Logging", defaultValue: "true", displayDuringSetup: true
+        	input "debug_pref", "bool", title: "Debug Logging", description: "Enable to display status information in the 'Live Logging' view", defaultValue: "true", displayDuringSetup: true
         }
         section("Extended Debug Logging") {
-        	input "debug_ext", "bool", title: "Extended Debug Logging", defaultValue: "false", displayDuringSetup: true
+        	input "debug_ext", "bool", title: "Extended Debug Logging", description: "Enable to display JSON information in the 'Live Logging' view", defaultValue: "false", displayDuringSetup: true
         }
 	}
 
@@ -91,6 +94,10 @@ metadata {
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
 			state("default", action:"refresh.refresh", icon:"st.secondary.refresh")
 		}
+        standardTile("stop", "device.stop", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+			state("default", label: 'disabled', icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#D3D3D3")
+			state("stopClean", label: 'pause', action: "stopClean", icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#ffffff", nextState:"on")
+		}
         standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
 			state "inactive", label:'disabled', icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#D3D3D3"
 			state "beep", label:'find', action:"tone.beep", icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#ffffff"
@@ -101,7 +108,7 @@ metadata {
 		}
 
         main("status")
-			details(["status","network","bin","refresh","beep"])        
+			details(["status","network","bin","refresh","stop","beep"])        
 		}
 }
 
@@ -131,6 +138,8 @@ def parse(String description) {
 				sendEvent(name: 'network', value: "Connected" as String)
 				sendEvent(name: 'battery', value: result.power_status.battery_charge as Integer)
         		if (settings.debug_pref == true) log.debug "Bin status value ${result.tc_status.bin_status}"
+                if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+				if (settings.debug_pref == true) log.debug "Main brush ${result.sensors.mainbrush_current} and side brush ${result.sensors.sidebrush_current}"
 			switch (result.tc_status.bin_status) { 
 				case "0":
 					sendEvent(name: 'bin', value: "empty" as String) 
@@ -251,16 +260,33 @@ def parse(String description) {
 					sendEvent(name: 'status', value: "findme" as String)
 				break;
 				case "st_clean":
-                   	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
-					if (result.tc_status.cleaning == 1){
+					if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+					if (settings.debug_pref == true) log.debug "Main brush ${result.sensors.mainbrush_current} and side brush ${result.sensors.sidebrush_current}"
+                    if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
 						sendEvent(name: 'switch', value: "on" as String)
                     	sendEvent(name: 'stop', value: "stopClean" as String)
                     	sendEvent(name: 'delay', value: "default" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
 					}
+                    else if (result.sensors.mainbrush_current != 0){
+                    	if (settings.debug_pref == true) log.debug "Starting cleaning"
+                    	sendEvent(name: 'status', value: "cleaning" as String)
+						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+                    }
+                    else if (result.sensors.sidebrush_current != 0){
+                    	if (settings.debug_pref == true) log.debug "Starting cleaning"
+                    	sendEvent(name: 'status', value: "cleaning" as String)
+						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+                    }
 					else {
-                        sendEvent(name: 'status', value: "default" as String)
+                        sendEvent(name: 'status', value: "paused" as String)
 						sendEvent(name: 'switch', value: "off" as String)
                         sendEvent(name: 'stop', value: "default" as String)
                     	sendEvent(name: 'delay', value: "default" as String)
@@ -268,39 +294,81 @@ def parse(String description) {
 					}
 				break;
 				case "st_clean_spot":
-                    if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
-					if (result.tc_status.cleaning == 1){
+					if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+					if (settings.debug_pref == true) log.debug "Main brush ${result.sensors.mainbrush_current} and side brush ${result.sensors.sidebrush_current}"
+                    if (result.tc_status.cleaning == 1){
 						sendEvent(name: 'status', value: "cleaning" as String)
 						sendEvent(name: 'switch', value: "on" as String)
                     	sendEvent(name: 'stop', value: "stopClean" as String)
                     	sendEvent(name: 'delay', value: "default" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
 					}
-					else {
-                        sendEvent(name: 'status', value: "error" as String)
-						sendEvent(name: 'switch', value: "off" as String) 
-                        sendEvent(name: 'stop', value: "default" as String)
-                    	sendEvent(name: 'delay', value: "default" as String) 
-                        sendEvent(name: 'beep', value: "beep" as String)
-					}
-				break;
-				case "st_clean_max":
-                   	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
-					if (result.tc_status.cleaning == 1){
-						sendEvent(name: 'status', value: "cleaning" as String)
+                    else if (result.sensors.mainbrush_current != 0){
+                    	if (settings.debug_pref == true) log.debug "Starting cleaning"
+                    	sendEvent(name: 'status', value: "cleaning" as String)
 						sendEvent(name: 'switch', value: "on" as String)
                     	sendEvent(name: 'stop', value: "stopClean" as String)
                     	sendEvent(name: 'delay', value: "default" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
-					}
+                    }
+                    else if (result.sensors.sidebrush_current != 0){
+                    	if (settings.debug_pref == true) log.debug "Starting cleaning"
+                    	sendEvent(name: 'status', value: "cleaning" as String)
+						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+                    }
 					else {
-                        sendEvent(name: 'status', value: "error" as String)
+                        sendEvent(name: 'status', value: "paused" as String)
 						sendEvent(name: 'switch', value: "off" as String)
                         sendEvent(name: 'stop', value: "default" as String)
                     	sendEvent(name: 'delay', value: "default" as String)
                         sendEvent(name: 'beep', value: "beep" as String)
 					}
 				break;
+				case "st_clean_max":
+                   	if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+					if (settings.debug_pref == true) log.debug "Main brush ${result.sensors.mainbrush_current} and side brush ${result.sensors.sidebrush_current}"
+                    if (result.tc_status.cleaning == 1){
+						sendEvent(name: 'status', value: "cleaning" as String)
+						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+					}
+                    else if (result.sensors.mainbrush_current != 0){
+                    	if (settings.debug_pref == true) log.debug "Starting cleaning"
+                    	sendEvent(name: 'status', value: "cleaning" as String)
+						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+                    }
+                    else if (result.sensors.sidebrush_current != 0){
+                    	if (settings.debug_pref == true) log.debug "Starting cleaning"
+                    	sendEvent(name: 'status', value: "cleaning" as String)
+						sendEvent(name: 'switch', value: "on" as String)
+                    	sendEvent(name: 'stop', value: "stopClean" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+                    }
+					else {
+                        sendEvent(name: 'status', value: "paused" as String)
+						sendEvent(name: 'switch', value: "off" as String)
+                        sendEvent(name: 'stop', value: "default" as String)
+                    	sendEvent(name: 'delay', value: "default" as String)
+                        sendEvent(name: 'beep', value: "beep" as String)
+					}
+				break;
+                case "st_error":
+                    if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
+                    sendEvent(name: 'status', value: "error" as String)
+					sendEvent(name: 'switch', value: "off" as String)
+					sendEvent(name: 'stop', value: "default" as String)
+					sendEvent(name: 'delay', value: "default" as String)
+					sendEvent(name: 'beep', value: "beep" as String)
+                break;
 				case "st_dock":
                     if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 					if (result.tc_status.cleaning == 1){
@@ -319,7 +387,7 @@ def parse(String description) {
 					}
 				break;
 				case "st_off":
-					sendEvent(name: 'status', value: "error" as String)
+					sendEvent(name: 'status', value: "paused" as String)
 					sendEvent(name: 'switch', value: "off" as String)
                     sendEvent(name: 'stop', value: "default" as String)
                     sendEvent(name: 'delay', value: "default" as String)
@@ -338,6 +406,7 @@ def parse(String description) {
 		}
 	}
 	else {
+    	log.debug "Status ${result.power_status.cleaner_state} not found"
 		sendEvent(name: 'status', value: "error" as String)
         sendEvent(name: 'switch', value: "off" as String)
 		sendEvent(name: 'network', value: "default" as String)
@@ -385,6 +454,12 @@ def refresh() {
 	if (settings.debug_pref == true) log.debug "Executing 'refresh'"
 	ipSetup()
 	api('refresh')
+}
+
+def stopClean() {
+	if (settings.debug_pref == true) log.debug "Executing 'stop'"
+	ipSetup()
+	api('stopclean')
 }
 
 def beep() {
@@ -482,12 +557,8 @@ def api(String rooCommand, success = {}) {
 			rooPath = "/command.json?command=find_me"
 			log.debug "The Beep Command was sent"
 		break;
-        case "delayclean":
-            rooPath = "/command.json?command=CleanDelay&minutes=${settings.delay}"
-			log.debug "The Delayed Clean Command was sent for ${settings.delay} Minutes"
-		break;
-        case "drivestop":
-			rooPath = "/command.json?command=drivestop"
+        case "stopclean":
+			rooPath = "/command.json?command=stop"
 			log.debug "The Pause/Stop Command was sent"
 		break;
 	}
@@ -548,7 +619,7 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	def text = "Version 2.1"
+	def text = "Version 2.2"
 }
 
 private def textCopyright() {
