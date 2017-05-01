@@ -20,7 +20,10 @@
  *  			- Added extended debuging to remove full JSON response when not required. 
  *  Version 2.2 - Added pause cleaning mode.  
  *  			- Modified beep status update.
- *  			- Fixed bug for error when undocking before cleaning.  
+ *  			- Fixed bug for error when undocking before cleaning. 
+ *  Version 2.3 - Added delayed cleaning mode. (with choice of delay in minutes)  
+ *  Version 2.4 - Disabled delayed cleaning mode. (Awaiting Thinking Cleaner to fix in API as it is broken in their app too)   
+ *  Version 2.5 - Fixed status in things list    
 */
  
 import groovy.json.JsonSlurper
@@ -39,6 +42,7 @@ metadata {
         command "Clean"
         command "MaxClean"
         command "stopClean"
+        command "delayClean"
 
 		attribute "network","string"
 		attribute "bin","string"
@@ -52,6 +56,9 @@ metadata {
         section("Cleaning Mode") {
         	input "cleanmode", "enum", title: "Clean Mode", defaultValue: "Clean", required: false, displayDuringSetup: true, options: ["Clean","Max Clean"]
         }
+//        section("Delayed Cleaning") {
+//        	input "delay", "enum", title: "Cleaning Delayed (xx) Minutes", defaultValue: "60", required: false, displayDuringSetup: true, options: ["30","60","90","120","150","180","210","240"]
+//        }
         section("Debug Logging") {
         	input "debug_pref", "bool", title: "Debug Logging", description: "Enable to display status information in the 'Live Logging' view", defaultValue: "true", displayDuringSetup: true
         }
@@ -97,18 +104,42 @@ metadata {
 			state("default", label: 'disabled', icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#D3D3D3")
 			state("stopClean", label: 'pause', action: "stopClean", icon: "https://cloud.githubusercontent.com/assets/8125308/18171484/d9535a80-7027-11e6-8bba-f90341eb4a86.png", backgroundColor: "#ffffff", nextState:"on")
 		}
+//        standardTile("delay", "device.delay", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
+//			state("default", label: 'disabled', icon: "https://cloud.githubusercontent.com/assets/8125308/18171514/ed458b94-7027-11e6-9cf9-3060d3d4743a.png", backgroundColor: "#D3D3D3")
+//			state("delayClean", label: 'delay', action: "delayClean", icon: "https://cloud.githubusercontent.com/assets/8125308/18171514/ed458b94-7027-11e6-9cf9-3060d3d4743a.png", backgroundColor: "#ffffff")
+//		}
         standardTile("beep", "device.beep", width: 2, height: 2, inactiveLabel: false, canChangeIcon: false) {
 			state "inactive", label:'disabled', icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#D3D3D3"
 			state "beep", label:'find', action:"tone.beep", icon:"https://cloud.githubusercontent.com/assets/8125308/18181294/36550e18-7050-11e6-83f8-b926fefe329e.png", backgroundColor:"#ffffff"
 		}
         standardTile("clean", "device.switch", width: 1, height: 1, inactiveLabel: false, canChangeIcon: false, decoration: "flat") {
-			state("on", label: 'dock', action: "switch.off", icon: "st.Appliances.appliances13", backgroundColor: "#79b821", nextState:"off")
-			state("off", label: 'clean', action: "switch.on", icon: "st.Appliances.appliances13", backgroundColor: "#79b821", nextState:"on")
+			state("on", label: 'Cleaning', action: "switch.off", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#79b821", nextState:"off")
+			state("off", label: 'Stopped', action: "switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#ffffff", nextState:"on")
 		}
 
-        main("status")
-			details(["status","network","bin","refresh","stop","beep"])        
+        main("clean")
+        	details(["status","network","bin","refresh","stop","beep"]) 
+//			details(["status","network","bin","refresh","stop","delay","beep"])        
 		}
+}
+
+// handle commands
+
+def installed() {
+	log.debug "Installed with settings: ${settings}"
+	initialize()
+}
+
+def updated() {
+    log.debug "Updated with settings: ${settings}"
+	initialize()
+}
+
+def initialize() {
+	log.info "Thinking Cleaner ${textVersion()} ${textCopyright()}"
+	ipSetup()
+	poll()
+    log.debug "Initializing poll"
 }
 
 def parse(String description) {
@@ -139,6 +170,7 @@ def parse(String description) {
         		if (settings.debug_pref == true) log.debug "Bin status value ${result.tc_status.bin_status}"
                 if (settings.debug_pref == true) log.debug "Clean state ${result.power_status.cleaner_state} status ${result.tc_status.cleaning}"
 				if (settings.debug_pref == true) log.debug "Main brush ${result.sensors.mainbrush_current} and side brush ${result.sensors.sidebrush_current}"
+                if (settings.debug_pref == true) log.debug "Vacuum Drive ${result.tc_status.vacuum_drive}"
 			switch (result.tc_status.bin_status) { 
 				case "0":
 					sendEvent(name: 'bin', value: "empty" as String) 
@@ -418,24 +450,6 @@ def parse(String description) {
 	parse
 }
 
-// handle commands
-
-def installed() {
-	log.debug "Installed with settings: ${settings}"
-	initialize()
-}
-
-def updated() {
-    log.debug "Updated with settings: ${settings}"
-	initialize()
-}
-
-def initialize() {
-	log.info "Thinking Cleaner ${textVersion()} ${textCopyright()}"
-	ipSetup()
-	poll()
-}
-
 def on() {
 	if (settings.debug_pref == true) log.debug "Executing 'on'"
 	log.debug "Executing 'on'"
@@ -461,6 +475,12 @@ def stopClean() {
 	api('stopclean')
 }
 
+def delayClean() {
+	if (settings.debug_pref == true) log.debug "Executing 'delay'"
+	ipSetup()
+	api('delayclean')  
+}
+
 def beep() {
 	if (settings.debug_pref == true) log.debug "Executing 'beep'"
 	ipSetup()
@@ -482,7 +502,7 @@ def MaxClean(){
 def poll() {
 	if (settings.debug_pref == true) log.debug "Executing 'poll'"
 	if (device.deviceNetworkId != null) {
-		api('refresh')
+        api('refresh')
         if (settings.debug_pref == true) log.debug "Device Network ID Set"
 	}
 	else {
@@ -556,6 +576,10 @@ def api(String rooCommand, success = {}) {
 			rooPath = "/command.json?command=find_me"
 			log.debug "The Beep Command was sent"
 		break;
+        case "delayclean":
+            rooPath = "/command.json?command=CleanDelay&minutes=${settings.delay}"
+			log.debug "The Delayed Clean Command was sent for ${settings.delay} Minutes"
+		break;
         case "stopclean":
 			rooPath = "/command.json?command=stop"
 			log.debug "The Pause/Stop Command was sent"
@@ -618,7 +642,7 @@ private delayAction(long time) {
 }
 
 private def textVersion() {
-	def text = "Version 2.2"
+	def text = "Version 2.5"
 }
 
 private def textCopyright() {
