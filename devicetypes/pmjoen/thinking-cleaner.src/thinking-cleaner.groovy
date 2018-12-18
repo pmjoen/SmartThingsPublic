@@ -117,7 +117,7 @@ metadata {
 			state("off", label: 'Stopped', action: "switch.on", icon: "https://cloud.githubusercontent.com/assets/8125308/18171190/a1846212-7026-11e6-8cd9-b9540ca93720.png", backgroundColor: "#ffffff", nextState:"on")
 		}
 
-        main("clean")
+        main("status")
         	details(["status","network","bin","refresh","stop","beep"]) 
 //			details(["status","network","bin","refresh","stop","delay","beep"])        
 		}
